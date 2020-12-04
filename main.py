@@ -3,21 +3,29 @@ import h5py
 import sys, getopt
 import random
 from os import path
+import yaml
 
+import struct
+import binascii
+import ctypes
+
+import config_file_reader
+import globals
 
 def print_tool_ussage():
-    print("hdf5Corrupter.py -h <help> -i <inputFile> -p <pathToCorrupt>")
+    print("hdf5Corrupter.py -h <help> -c <configFile>")
 
 
 def corrupt_value(val: float):
-    return val + 100
+    return val + 128
 
 
+# give a dataset, returns a random index based on its shape
 def get_random_indexes(dataset):
     indexes = [0] * dataset.ndim
     currentDim = 0
-    for dimLenght in dataset.shape:
-        ranIndex = random.randint(0,dimLenght-1)
+    for dimLength in dataset.shape:
+        ranIndex = random.randint(0,dimLength-1)
         indexes[currentDim] = ranIndex
         currentDim += 1
 
@@ -25,16 +33,20 @@ def get_random_indexes(dataset):
 
 
 def corrupt_dataset(dataset, prints_enabled: bool = True):
-    indexes = get_random_indexes(dataset)
+    r_pos = get_random_indexes(dataset)
     if prints_enabled:
-        print("will corrupt at: " + str(indexes))
+        print("will try to corrupt at: " + str(r_pos))
     if dataset.ndim == 1:
-        dataset[indexes[0]] = corrupt_value(dataset[indexes[0]])
+        dataset[r_pos[0]] = corrupt_value(dataset[r_pos[0]])
     elif dataset.ndim == 2:
-        dataset[indexes[0],indexes[1]] = corrupt_value(dataset[indexes[0],indexes[1]])
+        dataset[r_pos[0],r_pos[1]] = corrupt_value(dataset[r_pos[0],r_pos[1]])
     elif dataset.ndim == 3:
-        dataset[indexes[0], indexes[1], indexes[2]] =\
-            corrupt_value(dataset[indexes[0], indexes[1], indexes[2]])
+        dataset[r_pos[0], r_pos[1], r_pos[2]] =\
+            corrupt_value(dataset[r_pos[0], r_pos[1], r_pos[2]])
+    # more than 3 is very unlikely
+    elif dataset.ndim == 4:
+        dataset[r_pos[0], r_pos[1], r_pos[2], r_pos[3]] =\
+            corrupt_value(dataset[r_pos[0], r_pos[1], r_pos[2],  r_pos[3]])
 
 
 def testCorruptNumpyArrays():
@@ -63,34 +75,64 @@ def testCorruptNumpyArrays():
     print(arr)
 
 
-def corrupt_hdf5_file(input_file: str, path_to_corrupt: str, prints_enabled: bool = True):
+def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, prints_enabled: bool = True):
     if path.exists(input_file):
+        errors_injected = 0
         with h5py.File(input_file, 'a') as hdf:
             # ls = list(hdf.keys())
-            dataset = hdf.get(path_to_corrupt)
 
-            if prints_enabled:
-                numpy_array = np.array(dataset)
-                print("dataset before")
-                print(numpy_array)
+            for location in locations_to_corrupt:
+                print("trying to corrupt at " + str(location))
 
-            corrupt_dataset(dataset)
+                dataset = hdf.get(location)
+                if(dataset is not None):
+                    if prints_enabled:
+                        numpy_array = np.array(dataset)
+                        print("dataset before")
+                        print(numpy_array)
 
-            if prints_enabled:
-                numpy_array = np.array(dataset)
-                print("dataset after")
-                print(numpy_array)
+                    corrupt_dataset(dataset)
+
+                    if prints_enabled:
+                        numpy_array = np.array(dataset)
+                        print("dataset after")
+                        print(numpy_array)
+                else:
+                    print("Error: Location " + str(location) + " does not exist in the file")
     else:
         print("File: " + input_file + " does not exist... exiting application")
         exit(2)
 
+def set_bit(value, n):
+    return value | (1 << n)
+
+
+def float_to_bits(value: float):
+    valueStr = ""
+    for index in range(8):
+        valueStr = str(value >> index & 1) + valueStr
+
+    return valueStr
+
+
+def testFlipFloats():
+    print(float_to_bits(2))
+    print(float_to_bits(3))
+    print(float_to_bits(4))
+    print(float_to_bits(5))
+    print(float_to_bits(6))
+    #print('0x' + str(binascii.hexlify(struct.pack('<d', 5.2))))
+    f = ctypes.c_float(5.2)
+    print(ctypes.c_int.from_address(ctypes.addressof(f)).value)
+    exit(2)
+
 
 def main():
+    #testFlipFloats()
     argument_list = sys.argv[1:]
-    short_options = "hi:p:"
-    long_options = ["help", "inputFile=", "pathToCorrupt="]
-    input_file = ''
-    path_to_corrupt = ''
+    short_options = "hc:"
+    long_options = ["help", "configFile="]
+    config_file = ''
     try:
         arguments, values = getopt.getopt(argument_list, short_options, long_options)
     except getopt.error as err:
@@ -100,15 +142,13 @@ def main():
 
     # Evaluate given options
     for current_argument, current_value in arguments:
-        if current_argument in ("-i", "--inputFile"):
-            input_file = current_value
+        if current_argument in ("-c", "--configFile"):
+            config_file = current_value
         elif current_argument in ("-h", "--help"):
             print_tool_ussage()
-        elif current_argument in ("-p", "--pathToCorrupt"):
-            print("path to corrupt is (%s)" % current_value)
-            path_to_corrupt = current_value
 
-    corrupt_hdf5_file(input_file, path_to_corrupt)
+    config_file_reader.read_config_file(config_file)
+    corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT)
 
 if __name__ == "__main__":
     main()
