@@ -1,19 +1,12 @@
-import numpy as np
-import h5py
-import sys, getopt
-import random
-from os import path
 import yaml
+import globals
 
-import struct
-import binascii
-import ctypes
-import  globals
 
 def print_options(corrupt_locations):
     print()
     print("********** Options **********")
     print(" " + globals.STR_HDF5_FILE + ": " + str(globals.HDF5_FILE))
+    print(" " + globals.STR_PRINT_ONLY + ": " + str(globals.PRINT_ONLY))
     print(" " + globals.STR_PROB + ": " + str(globals.PROB))
     print(" " + globals.STR_SINGLE_INJ + ": " + str(globals.SINGLE_INJ))
     print(" " + globals.STR_BYTE + ": " + str(globals.BYTE))
@@ -29,10 +22,11 @@ def read_config_file(config_file_path, prints_enabled: bool = True):
     with open(config_file_path) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
         globals.HDF5_FILE = data[globals.STR_HDF5_FILE]
+        globals.PRINT_ONLY = data[globals.STR_PRINT_ONLY]
         globals.PROB = data[globals.STR_PROB]
         globals.SINGLE_INJ = data[globals.STR_SINGLE_INJ] == 1
         globals.BYTE = data[globals.STR_BYTE]
         globals.BIT = data[globals.STR_BIT]
         globals.LOCATIONS_TO_CORRUPT = data[globals.STR_LOCATIONS_TO_CORRUPT]
-        if(prints_enabled):
+        if prints_enabled:
             print_options(globals.LOCATIONS_TO_CORRUPT)
