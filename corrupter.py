@@ -22,10 +22,9 @@ def __get_random_indexes(dataset):
     return indexes
 
 
-def corrupt_dataset(dataset, prints_enabled: bool = True):
+def corrupt_dataset(dataset):
     r_pos = __get_random_indexes(dataset)
-    if prints_enabled:
-        print("Corruption Position: " + str(r_pos))
+    print("Corruption Position: " + str(r_pos))
     if dataset.ndim == 1:
         dataset[r_pos[0]] = corrupt_value(dataset[r_pos[0]])
     elif dataset.ndim == 2:

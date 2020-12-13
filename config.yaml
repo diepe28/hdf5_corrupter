@@ -11,7 +11,6 @@
 #####################################################
 
 hdf5_file: "/home/diego/Documents/hdf5_files/checkpoint-tensorFlow.h5"
-print_only: True
 prob: 1e-7
 singleInj: 1
 byte: -1
