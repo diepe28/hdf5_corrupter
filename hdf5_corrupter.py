@@ -1,3 +1,4 @@
+import random
 import h5py
 import numpy as np
 import sys, getopt
@@ -43,23 +44,29 @@ def print_hdf5_file(input_file: str):
 # each item is a tuple: {name, group}
 def count_hdf5_item_entries(item: tuple):
     item_val = item[1]
+    count = 0
 
     if getattr(item_val, "items", None) is not None:
         sub_items = list(item_val.items())
         for sub_item in sub_items:
-            count_hdf5_item_entries(sub_item)
+            count += count_hdf5_item_entries(sub_item)
+
+        return count
     else:
         # check if it's dataset and count count its entries
         if getattr(item_val, "shape", None) is not None:
-            globals.TOTAL_VALUE_COUNT += np.prod(item_val.shape)
+            return np.prod(item_val.shape)
 
 
 def count_hdf5_file_entries(input_file: str):
+    count = 0
     if path.exists(input_file):
         with h5py.File(input_file, 'r') as hdf:
             base_items = list(hdf.items())
             for item in base_items:
-                count_hdf5_item_entries(item)
+                count += count_hdf5_item_entries(item)
+
+    return count
 
 def main():
     #testFlipFloats()
@@ -91,11 +98,16 @@ def main():
     if globals.PRINT_ONLY:
         print_hdf5_file(globals.HDF5_FILE)
     else:
-        if globals.TOTAL_VALUE_COUNT == -1:
-            globals.TOTAL_VALUE_COUNT = 0
-        count_hdf5_file_entries(globals.HDF5_FILE)
-        corrupter.corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT, False)
+        file_entries_count = count_hdf5_file_entries(globals.HDF5_FILE)
+        # calculates the number of injection tries, based on the desired corruption percentage
+        num_injection_tries = int(globals.MAX_CORRUPTION_PERCENTAGE * file_entries_count / 100)
+        print("Will inject at most: " + str(num_injection_tries) + " errors")
 
+        errors_injected = corrupter.corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
+                                    globals.PROB, num_injection_tries,  False)
+
+        print("File corrupted: " + str(errors_injected * 100 / file_entries_count) +
+              " %, with a total of: " + str(errors_injected) + " errors injected")
 
 if __name__ == "__main__":
     main()

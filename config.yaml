@@ -1,9 +1,8 @@
 ############### Injector Parameters ##################
 #
 #    hdf5_file - the path to the hdf5 file to corrupt
-#    print_only - just print the contents of the file without injecting any error
-#    print_level - from 1 - 3
 #    prob - probability to inject corruption
+#    corruption_percentage - value between 0-100, it represents the percentage of entries to corrupt (based on the HDF5 amount of entries)
 #    byte - which byte is faulty (0-7) -1 random
 #    singleInj - one injection at most per hdf5 file (0 or 1)
 #    locations_to_corrupt - list of locations to try to inject errors
@@ -11,7 +10,9 @@
 #####################################################
 
 hdf5_file: "/home/diego/Documents/hdf5_files/checkpoint-tensorFlow.h5"
-prob: 1e-7
+#prob: 1e-8
+prob: 0.2
+max_corruption_percentage: 1e-4
 singleInj: 1
 byte: -1
 bit: -1
