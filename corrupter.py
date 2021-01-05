@@ -14,7 +14,8 @@ def corrupt_value(val: float, corruption_prob: float):
 
 # give a dataset, returns a random index based on its shape
 def __get_random_indexes(dataset):
-    indexes = [0] * dataset.ndim
+    dimensions = 1 if dataset.ndim == 0 else dataset.ndim
+    indexes = [0] * dimensions
     current_dim = 0
     for dimLength in dataset.shape:
         ranIndex = random.randint(0, dimLength-1)
@@ -27,7 +28,9 @@ def __get_random_indexes(dataset):
 def corrupt_dataset(dataset, corruption_prob: float, prints_enabled: bool = True):
     success = False
     r_pos = __get_random_indexes(dataset)
-    if dataset.ndim == 1:
+    if dataset.ndim == 0:
+        dataset[()], success = corrupt_value(dataset[()], corruption_prob)
+    elif dataset.ndim == 1:
         dataset[r_pos[0]], success = corrupt_value(dataset[r_pos[0]], corruption_prob)
     elif dataset.ndim == 2:
         dataset[r_pos[0], r_pos[1]], success = corrupt_value(dataset[r_pos[0], r_pos[1]], corruption_prob)
