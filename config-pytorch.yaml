@@ -1,0 +1,24 @@
+############### Injector Parameters ##################
+#
+#    hdf5_file - the path to the hdf5 file to corrupt
+#    prob - probability to inject corruption
+#    corruption_percentage - value between 0-100, it represents the percentage of entries to corrupt (based on the HDF5 amount of entries)
+#    byte - which byte is faulty (0-7) -1 random
+#    singleInj - one injection at most per hdf5 file (0 or 1)
+#    locations_to_corrupt - list of locations to try to inject errors
+# do we need a probability of injection? here we definitely want to inject errors
+#####################################################
+
+hdf5_file: "/home/diego/Documents/hdf5_files/check_model_pytorch.h5"
+#prob: 1e-8
+prob: 1
+max_corruption_percentage: 1e-3
+singleInj: 1
+byte: -1
+bit: -1
+locations_to_corrupt:
+  - "/model/layer1.0.bn1.num_batches_tracked"
+  - "/model/layer1.0.bn2.bias"
+  - "/model/layer1.2.bn3.weight"
+  - "/model/fc.weight"
+  - "/model/layer1.0.conv3.weight"
