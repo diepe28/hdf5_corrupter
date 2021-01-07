@@ -46,6 +46,7 @@ def count_hdf5_item_entries(item: tuple):
     item_val = item[1]
     count = 0
 
+    # if it has the "items" property it means it is not a leaf
     if getattr(item_val, "items", None) is not None:
         sub_items = list(item_val.items())
         for sub_item in sub_items:
@@ -67,6 +68,33 @@ def count_hdf5_file_entries(input_file: str):
                 count += count_hdf5_item_entries(item)
 
     return count
+
+
+# each item is a tuple: {name, group}
+def __get_hdf5_file_leaf_locations(item: tuple, leaf_locations: list, prefix: str):
+    item_name = prefix + item[0]
+    item_val = item[1]
+
+    # if it has the "items" property it means it is not a leaf
+    if getattr(item_val, "items", None) is not None:
+        sub_items = list(item_val.items())
+        for sub_item in sub_items:
+            __get_hdf5_file_leaf_locations(sub_item, leaf_locations, item_name + "/")
+
+    else:
+        leaf_locations.append(item_name)
+
+
+def get_hdf5_file_leaf_locations(input_file: str):
+    leaf_locations = []
+    if path.exists(input_file):
+        with h5py.File(input_file, 'r') as hdf:
+            base_items = list(hdf.items())
+            for item in base_items:
+                __get_hdf5_file_leaf_locations(item, leaf_locations, "/")
+
+    return leaf_locations
+
 
 def main():
     #testFlipFloats()
@@ -98,6 +126,10 @@ def main():
     if globals.PRINT_ONLY:
         print_hdf5_file(globals.HDF5_FILE)
     else:
+        if globals.USE_RANDOM_LOCATIONS:
+            print("Injecting errors at random locations")
+            globals.LOCATIONS_TO_CORRUPT = get_hdf5_file_leaf_locations(globals.HDF5_FILE)
+
         file_entries_count = count_hdf5_file_entries(globals.HDF5_FILE)
         # calculates the number of injection tries, based on the desired corruption percentage
         num_injection_tries = int(globals.MAX_CORRUPTION_PERCENTAGE * file_entries_count / 100)
