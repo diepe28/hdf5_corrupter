@@ -1,18 +1,57 @@
-import ctypes
+import globals
 import random
 from os import path
 import h5py
 import numpy as np
 import sys
+from codecs import decode
+import struct
+from random import randint
 
 
+def bin_to_float(b):
+    bf = int_to_bytes(int(b, 2), 8)  # 8 bytes needed for IEEE 754 binary64.
+    return struct.unpack('>d', bf)[0]
+
+
+def int_to_bytes(n, length):  # Helper function
+    return decode('%%0%dx' % (length << 1) % n, 'hex')[-length:]
+
+
+def float_to_bin(value):  # For testing.
+    [d] = struct.unpack(">Q", struct.pack(">d", value))
+    return '{:064b}'.format(d)
+
+
+def __change_bit(binary: str, index: int):
+    # print("Flipping bit at position:" + str(index))
+    bit = "1" if binary[index] == '0' else "0"
+    binary = binary[:index] + bit + binary[index + 1:]
+    return binary
+
+
+# floats have 8 bytes so: byte and bit in [0-7], -1 means random
+def change_bit(binary: str, byte: int, bit: int):
+    if byte == -1:
+        byte = randint(0, 7)
+    if bit == -1:
+        bit = randint(0, 7)
+
+    index = byte * 8 + bit
+    return __change_bit(binary, index)
+
+
+# todo, what about when the value is an integer
 def corrupt_value(val: float, corruption_prob: float):
     if random.random() < corruption_prob:
-        return val + 128, True
+        binary = float_to_bin(val)
+        new_binary = change_bit(binary, globals.BYTE, globals.BIT)
+        new_val = bin_to_float(new_binary)
+        return new_val, True
     return val, False
 
 
-# give a dataset, returns a random index based on its shape
+# given a dataset, returns a random index based on its shape
 def __get_random_indexes(dataset):
     dimensions = 1 if dataset.ndim == 0 else dataset.ndim
     indexes = [0] * dimensions
@@ -62,20 +101,20 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_pro
 
                 dataset = hdf.get(location)
                 if dataset is not None:
-                    if prints_enabled:
-                        numpy_array = np.array(dataset)
-                        # if prints_enabled:
-                        #    print("dataset before")
-                        #    print(numpy_array)
+                    # if prints_enabled:
+                    # numpy_array = np.array(dataset)
+                    # if prints_enabled:
+                    #    print("dataset before")
+                    #    print(numpy_array)
 
                     if corrupt_dataset(dataset, corruption_prob, prints_enabled):
                         errors_injected += 1
 
-                    if prints_enabled:
-                        numpy_array = np.array(dataset)
-                        # if prints_enabled:
-                        #    print("dataset after")
-                        #    print(numpy_array)
+                    # if prints_enabled:
+                    # numpy_array = np.array(dataset)
+                    # if prints_enabled:
+                    #    print("dataset after")
+                    #    print(numpy_array)
                 else:
                     print("Error: Location " + str(location) + " does not exist in the file")
 
@@ -84,30 +123,6 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_pro
     else:
         print("File: " + input_file + " does not exist... exiting application")
         exit(2)
-
-
-def set_bit(value, n):
-    return value | (1 << n)
-
-
-def float_to_bits(value: float):
-    valueStr = ""
-    for index in range(8):
-        valueStr = str(value >> index & 1) + valueStr
-
-    return valueStr
-
-
-def testFlipFloats():
-    print(float_to_bits(2))
-    print(float_to_bits(3))
-    print(float_to_bits(4))
-    print(float_to_bits(5))
-    print(float_to_bits(6))
-    #print('0x' + str(binascii.hexlify(struct.pack('<d', 5.2))))
-    f = ctypes.c_float(5.2)
-    print(ctypes.c_int.from_address(ctypes.addressof(f)).value)
-    exit(2)
 
 
 def testCorruptNumpyArrays():

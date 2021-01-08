@@ -4,9 +4,9 @@
 #    prob - probability to inject corruption
 #    corruption_percentage - value between 0-100, it represents the percentage of entries to corrupt (based on the HDF5 amount of entries)
 #    byte - which byte is faulty (0-7) -1 random
+#    bit - which bit is faulty (0-7) -1 random
 #    use_random_locations - choose random locations on the file to inject errors, if true it will ignore the locations_to_corrupt
 #    locations_to_corrupt - list of locations to try to inject errors
-# do we need a probability of injection? here we definitely want to inject errors
 #####################################################
 
 hdf5_file: "/home/diego/Documents/hdf5_files/model_epoch_2_chainer.h5"

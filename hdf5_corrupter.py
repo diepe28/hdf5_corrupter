@@ -1,4 +1,3 @@
-import random
 import h5py
 import numpy as np
 import sys, getopt
@@ -15,6 +14,7 @@ def print_tool_ussage_and_exit():
     print("   -c | -configFile \"path/to/config.yaml\", mandatory argument, the tool always needs a config.yaml")
     print("   -p | -printOnly, optional argument, prints the contents of the hdf5 file specified at config file")
     sys.exit(2)
+
 
 # each item is a tuple: {name, group}
 def print_hdf5_item(item: tuple, prefix: str):
@@ -97,9 +97,6 @@ def get_hdf5_file_leaf_locations(input_file: str):
 
 
 def main():
-    #testFlipFloats()
-    #corrupter.testCorruptNumpyArrays()
-
     argument_list = sys.argv[1:]
     short_options = "hc:p"
     long_options = ["help", "configFile=", "printOnly"]

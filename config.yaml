@@ -4,15 +4,15 @@
 #    prob - probability to inject corruption
 #    corruption_percentage - value between 0-100, it represents the percentage of entries to corrupt (based on the HDF5 amount of entries)
 #    byte - which byte is faulty (0-7) -1 random
+#    bit - which bit is faulty (0-7) -1 random
 #    use_random_locations - choose random locations on the file to inject errors, if true it will ignore the locations_to_corrupt
 #    locations_to_corrupt - list of locations to try to inject errors
-# do we need a probability of injection? here we definitely want to inject errors
 #####################################################
 
 hdf5_file: "/home/diego/Documents/hdf5_files/checkpoint-tensorFlow.h5"
 #prob: 1e-8
 prob: 1
-max_corruption_percentage: 1e-3
+max_corruption_percentage: 1e-4
 byte: -1
 bit: -1
 use_random_locations: true

@@ -3,7 +3,7 @@ MAX_CORRUPTION_PERCENTAGE = 1e-5
 PRINT_ONLY = False
 BYTE = -1   # -1 means random
 BIT = -1    # -1 means random
-USE_RANDOM_LOCATIONS = False
+USE_RANDOM_LOCATIONS = True
 LOCATIONS_TO_CORRUPT = []
 HDF5_FILE = ""
 
