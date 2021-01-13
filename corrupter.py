@@ -1,11 +1,12 @@
 import globals
 import random
-from os import path
 import h5py
 import numpy as np
 import sys
-from codecs import decode
 import struct
+import logging
+from os import path
+from codecs import decode
 from random import randint
 
 
@@ -47,7 +48,9 @@ def corrupt_value(val: float, corruption_prob: float):
         binary = float_to_bin(val)
         new_binary = change_bit(binary, globals.BYTE, globals.BIT)
         new_val = bin_to_float(new_binary)
+        logging.debug("Location value was corrupted from " + str(val) + " --> " + str(new_val))
         return new_val, True
+    logging.debug("Did not corrupt value at the index")
     return val, False
 
 
@@ -64,9 +67,10 @@ def __get_random_indexes(dataset):
     return indexes
 
 
-def corrupt_dataset(dataset, corruption_prob: float, prints_enabled: bool = True):
+def corrupt_dataset(dataset, corruption_prob: float):
     success = False
     r_pos = __get_random_indexes(dataset)
+    logging.debug("Indexes to corrupt: " + str(r_pos))
     if dataset.ndim == 0:
         dataset[()], success = corrupt_value(dataset[()], corruption_prob)
     elif dataset.ndim == 1:
@@ -76,12 +80,11 @@ def corrupt_dataset(dataset, corruption_prob: float, prints_enabled: bool = True
     elif dataset.ndim == 3:
         dataset[r_pos[0], r_pos[1], r_pos[2]], success = \
             corrupt_value(dataset[r_pos[0], r_pos[1], r_pos[2]], corruption_prob)
-    # more than 3 is very unlikely
     elif dataset.ndim == 4:
         dataset[r_pos[0], r_pos[1], r_pos[2], r_pos[3]], success = \
             corrupt_value(dataset[r_pos[0], r_pos[1], r_pos[2],  r_pos[3]], corruption_prob)
-    if success and prints_enabled:
-        print("Corruption position: " + str(r_pos))
+    # more than 4 is very unlikely... right?
+
     return success
 
 
@@ -89,6 +92,7 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_pro
                       num_injection_tries: int, prints_enabled: bool = True):
     if path.exists(input_file):
         errors_injected = 0
+        logging.info("----------- Corrupting file, main loop -----------")
         with h5py.File(input_file, 'a') as hdf:
             locations_count = locations_to_corrupt.__len__()
 
@@ -96,8 +100,7 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_pro
                 # randomly calculates the next location to corrupt
                 next_location_index = random.randrange(1, locations_count)
                 location = locations_to_corrupt[next_location_index]
-                if prints_enabled:
-                    print("Trying to corrupt at " + str(location))
+                logging.debug("Will try to corrupt at: " + str(location))
 
                 dataset = hdf.get(location)
                 if dataset is not None:
@@ -107,7 +110,7 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_pro
                     #    print("dataset before")
                     #    print(numpy_array)
 
-                    if corrupt_dataset(dataset, corruption_prob, prints_enabled):
+                    if corrupt_dataset(dataset, corruption_prob):
                         errors_injected += 1
 
                     # if prints_enabled:
@@ -116,13 +119,13 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_pro
                     #    print("dataset after")
                     #    print(numpy_array)
                 else:
-                    print("Error: Location " + str(location) + " does not exist in the file")
+                    logging.error(str(location) + " doesn't exist or it is not supported for error injection")
 
                 num_injection_tries -= 1
         return errors_injected
     else:
-        print("File: " + input_file + " does not exist... exiting application")
-        exit(2)
+        logging.error("Specified file does not exist... exiting the tool")
+        sys.exit(2)
 
 
 def testCorruptNumpyArrays():
