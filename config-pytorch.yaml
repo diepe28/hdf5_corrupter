@@ -21,4 +21,5 @@ locations_to_corrupt:
   - "/model/layer1.0.bn2.bias"
   - "/model/layer1.2.bn3.weight"
   - "/model/fc.weight"
+  - "/model/bn1.num_batches_tracked"
   - "/model/layer1.0.conv3.weight"

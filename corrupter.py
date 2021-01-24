@@ -24,32 +24,36 @@ def float_to_bin(value):  # For testing.
     return '{:064b}'.format(d)
 
 
-def __change_bit(binary: str, index: int):
+def change_bit_in_binary(binary: str, index: int):
     # print("Flipping bit at position:" + str(index))
-    bit = "1" if binary[index] == '0' else "0"
-    binary = binary[:index] + bit + binary[index + 1:]
+    reversed_binary = binary[::-1]
+    bit = "1" if reversed_binary[index] == '0' else "0"
+    reversed_binary = reversed_binary[:index] + bit + reversed_binary[index + 1:]
+    binary = reversed_binary[::-1]
     return binary
 
 
-# floats have 8 bytes so: byte and bit in [0-7], -1 means random
-def change_bit(binary: str, byte: int, bit: int):
-    if byte == -1:
-        byte = randint(0, 7)
-    if bit == -1:
-        bit = randint(0, 7)
-
-    index = byte * 8 + bit
-    return __change_bit(binary, index)
-
-
-# todo, what about when the value is an integer
-def corrupt_value(val: float, corruption_prob: float):
+def corrupt_value(val, corruption_prob: float):
     if random.random() < corruption_prob:
-        binary = float_to_bin(val)
-        new_binary = change_bit(binary, globals.BYTE, globals.BIT)
-        new_val = bin_to_float(new_binary)
-        logging.debug("Location value was corrupted from " + str(val) + " --> " + str(new_val))
-        return new_val, True
+        str_val_type = str(type(val))
+
+        byte = randint(0, 7) if globals.BYTE == -1 else globals.BYTE
+        bit = randint(0, 7) if globals.BIT == -1 else globals.BIT
+
+        if "int" in str_val_type:
+            binary = str(bin(val))[2:]
+            offset = randint(0, len(binary)-1)
+            new_binary = change_bit_in_binary(binary, offset)
+            new_val = int(new_binary, 2)
+            logging.debug("Location value was corrupted from " + str(val) + " --> " + str(new_val))
+            return new_val, True
+        else:
+            binary = float_to_bin(val)
+            offset = byte * 8 + bit
+            new_binary = change_bit_in_binary(binary, offset)
+            new_val = bin_to_float(new_binary)
+            logging.debug("Location value was corrupted from " + str(val) + " --> " + str(new_val))
+            return new_val, True
     logging.debug("Did not corrupt value at the index")
     return val, False
 
@@ -98,7 +102,7 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_pro
 
             while num_injection_tries > 0:
                 # randomly calculates the next location to corrupt
-                next_location_index = random.randrange(1, locations_count)
+                next_location_index = random.randrange(0, locations_count-1) if locations_count > 1 else 0
                 location = locations_to_corrupt[next_location_index]
                 logging.debug("Will try to corrupt at: " + str(location))
 
