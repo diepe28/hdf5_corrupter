@@ -7,6 +7,7 @@ import globals
 import corrupter
 import logging
 
+logging.basicConfig(filename='corruptionLog.txt', filemode='w', format='%(levelname)s - %(message)s', level=logging.DEBUG)
 
 def print_tool_ussage_and_exit():
     print("Correct usage of the tool: ")
@@ -30,7 +31,7 @@ def print_hdf5_item(item: tuple, prefix: str):
             print_hdf5_item(sub_item, "\t" + prefix)
         print()
     else:
-        #get dataset and print it
+        # get dataset and print it
         numpy_array = np.array(item_val)
         print(numpy_array)
 
@@ -113,9 +114,6 @@ def get_hdf5_file_leaf_locations(input_file: str):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
-    logging.basicConfig(filename='/home/diego/PycharmProjects/hdf5_corrupter/corruption.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
-
     argument_list = sys.argv[1:]
     short_options = "hc:p"
     long_options = ["help", "configFile=", "printOnly"]
@@ -153,10 +151,11 @@ def main():
         logging.info("Will inject at most: " + str(num_injection_tries) + " errors")
 
         errors_injected = corrupter.corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
-                                    globals.PROB, num_injection_tries,  False)
+                                                      globals.PROB, num_injection_tries, False)
 
         logging.info("File corrupted: " + str(errors_injected * 100 / file_entries_count) +
-              " %, with a total of: " + str(errors_injected) + " errors injected")
+                     " %, with a total of: " + str(errors_injected) + " errors injected")
+
 
 if __name__ == "__main__":
     main()
