@@ -5,6 +5,7 @@ import numpy as np
 import sys
 import struct
 import logging
+import math
 from os import path
 from codecs import decode
 from random import randint
@@ -52,6 +53,8 @@ def corrupt_value(val, corruption_prob: float):
             offset = byte * 8 + bit
             new_binary = change_bit_in_binary(binary, offset)
             new_val = bin_to_float(new_binary)
+            if not globals.ALLOW_NaN_VALUES and math.isnan(new_val):
+                return val, False
             logging.debug("Location value was corrupted from " + str(val) + " --> " + str(new_val))
             return new_val, True
     logging.debug("Did not corrupt value at the index")

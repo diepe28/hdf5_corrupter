@@ -11,6 +11,7 @@ def log_options(corrupt_locations):
     logging.info(" " + globals.STR_MAX_CORRUPTION_PERCENTAGE + ": " + str(globals.MAX_CORRUPTION_PERCENTAGE))
     logging.info(" " + globals.STR_BYTE + ": " + str(globals.BYTE))
     logging.info(" " + globals.STR_BIT + ": " + str(globals.BIT))
+    logging.info(" " + globals.STR_ALLOW_NaN_VALUES + ": " + str(globals.ALLOW_NaN_VALUES))
     logging.info(" " + globals.STR_USE_RANDOM_LOCATIONS + ": " + str(globals.USE_RANDOM_LOCATIONS))
     logging.info(" " + globals.STR_LOCATIONS_TO_CORRUPT + ":")
     for location in corrupt_locations:
@@ -28,6 +29,7 @@ def read_config_file(config_file_path: str):
         globals.MAX_CORRUPTION_PERCENTAGE = float(data[globals.STR_MAX_CORRUPTION_PERCENTAGE])
         globals.BYTE = int(data[globals.STR_BYTE])
         globals.BIT = int(data[globals.STR_BIT])
+        globals.ALLOW_NaN_VALUES = bool(data[globals.STR_ALLOW_NaN_VALUES])
         globals.USE_RANDOM_LOCATIONS = bool(data[globals.STR_USE_RANDOM_LOCATIONS])
         globals.LOCATIONS_TO_CORRUPT = data[globals.STR_LOCATIONS_TO_CORRUPT]
         log_options(globals.LOCATIONS_TO_CORRUPT)

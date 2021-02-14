@@ -1,13 +1,17 @@
-############### Injector Parameters ##################
+################################################# Injector Parameters #################################################
 #
-#    hdf5_file - the path to the hdf5 file to corrupt
-#    prob - probability to inject corruption
-#    corruption_percentage - value between 0-100, it represents the percentage of entries to corrupt (based on the HDF5 amount of entries)
-#    byte - which byte is faulty (0-7) -1 random
-#    bit - which bit is faulty (0-7) -1 random
-#    use_random_locations - choose random locations on the file to inject errors, if true it will ignore the locations_to_corrupt
-#    locations_to_corrupt - list of locations to try to inject errors
-#####################################################
+#    hdf5_file -              the path to the hdf5 file to corrupt
+#    prob -                   probability to inject corruption
+#    corruption_percentage -  value between 0-1, it represents the percentage of entries to corrupt (based on the HDF5
+#                             amount of entries)
+#    byte -                   which byte is faulty (0-7) -1 random
+#    bit -                    which bit is faulty (0-7) -1 random
+#    allow_NaN_values -       when flipping a bit of the binary representation of a double, the resulting binary can
+#                             represent a NaN. if set to False, the corruption mechanism will never produce NaN values.
+#    use_random_locations -   choose random locations on the file to inject errors,
+#                             if true it will ignore the locations_to_corrupt
+#    locations_to_corrupt -   list of locations to try to inject errors
+################################################# Injector Parameters #################################################
 
 hdf5_file: "/home/diego/Documents/hdf5_files/model_epoch_2_chainer.h5"
 #prob: 1e-8
@@ -15,6 +19,7 @@ prob: 1
 max_corruption_percentage: 1e-3
 byte: -1
 bit: -1
+allow_NaN_values: True
 use_random_locations: False
 locations_to_corrupt:
   - "/predictor/conv1/W"

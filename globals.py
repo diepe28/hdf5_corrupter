@@ -4,6 +4,7 @@ PRINT_ONLY = False
 BYTE = -1   # -1 means random
 BIT = -1    # -1 means random
 USE_RANDOM_LOCATIONS = True
+ALLOW_NaN_VALUES = False
 LOCATIONS_TO_CORRUPT = []
 HDF5_FILE = ""
 
@@ -13,4 +14,5 @@ STR_MAX_CORRUPTION_PERCENTAGE = "max_corruption_percentage"
 STR_BYTE = "byte"
 STR_BIT = "bit"
 STR_USE_RANDOM_LOCATIONS = "use_random_locations"
+STR_ALLOW_NaN_VALUES = "allow_NaN_values"
 STR_LOCATIONS_TO_CORRUPT = "locations_to_corrupt"
