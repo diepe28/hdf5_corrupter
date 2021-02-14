@@ -15,7 +15,7 @@ The .yaml configuration file must have the following entries:
 - *corruption_percentage*, value between 0-1, it represents the percentage of entries to corrupt (based on the HDF5 amount of entries)
 - *byte*, which byte is faulty (0-7) -1 random
 - *bit*, which bit is faulty (0-7) -1 random
-- *allow_NaN_values*, when flipping a bit of the binary representation of a double, the resulting binary can represent a NaN. if set to False, the corruption mechanism will never produce NaN values.
+- *allow_NaN_values*, when flipping a bit of the in a double, the resulting binary can represent a NaN or Inf. If set to False, the corruption mechanism will never produce such values
 - *use_random_locations*, choose random locations on the file to inject errors, if true it will ignore the locations_to_corrupt
 - *locations_to_corrupt*, list of locations to try to inject errors
 

@@ -53,7 +53,8 @@ def corrupt_value(val, corruption_prob: float):
             offset = byte * 8 + bit
             new_binary = change_bit_in_binary(binary, offset)
             new_val = bin_to_float(new_binary)
-            if not globals.ALLOW_NaN_VALUES and math.isnan(new_val):
+            if not globals.ALLOW_NaN_VALUES and (math.isnan(new_val) or math.isinf(new_val)):
+                logging.debug("Did not corrupt value at the index because it was a NaN or Inf")
                 return val, False
             logging.debug("Location value was corrupted from " + str(val) + " --> " + str(new_val))
             return new_val, True
