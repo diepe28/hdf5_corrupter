@@ -149,6 +149,7 @@ def main():
         # calculates the number of injection tries, based on the desired corruption percentage
         num_injection_tries = int(globals.MAX_CORRUPTION_PERCENTAGE * file_entries_count / 100)
         logging.info("Will inject at most: " + str(num_injection_tries) + " errors")
+        logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BYTE) + "-" + str(globals.LAST_BYTE) + "]")
 
         errors_injected = corrupter.corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
                                                       globals.PROB, num_injection_tries, False)

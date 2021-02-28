@@ -38,7 +38,7 @@ def corrupt_value(val, corruption_prob: float):
     if random.random() < corruption_prob:
         str_val_type = str(type(val))
 
-        byte = randint(0, 7) if globals.BYTE == -1 else globals.BYTE
+        byte = randint(globals.FIRST_BYTE, globals.LAST_BYTE)
         bit = randint(0, 7) if globals.BIT == -1 else globals.BIT
 
         if "int" in str_val_type:
