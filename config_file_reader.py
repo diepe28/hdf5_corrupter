@@ -25,7 +25,7 @@ def log_options(corrupt_locations):
 def read_config_file(config_file_path: str):
     with open(config_file_path) as f:
         logging.info("Reading config file: " + config_file_path)
-        data = yaml.load(f, Loader=yaml.FullLoader)
+        data = yaml.load(f, Loader=yaml.Loader)
         globals.HDF5_FILE = data[globals.STR_HDF5_FILE]
         globals.PROB = float(data[globals.STR_PROB])
         globals.MAX_CORRUPTION_PERCENTAGE = float(data[globals.STR_MAX_CORRUPTION_PERCENTAGE])
