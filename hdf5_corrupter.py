@@ -23,17 +23,29 @@ def print_tool_ussage_and_exit():
 def print_hdf5_item(item: tuple, prefix: str):
     item_name = item[0]
     item_val = item[1]
-    print(prefix + item_name + "," + str(type(item_val)))
+    item_info = prefix + "\"" + item_name + "\" --- Type: " + str(type(item_val))
 
     if getattr(item_val, "items", None) is not None:
+        logging.info(item_info)
         sub_items = list(item_val.items())
         for sub_item in sub_items:
             print_hdf5_item(sub_item, "\t" + prefix)
-        print()
+        logging.info("")
     else:
-        # get dataset and print it
+        # get dataset and print info about it, not the data
         numpy_array = np.array(item_val)
-        print(numpy_array)
+        # print(numpy_array)
+        if numpy_array is not None:
+            item_info += " --- Dimensions: ["
+            if numpy_array.ndim > 1:
+                item_info += str(numpy_array.shape[0])
+                for i in range(1, len(numpy_array.shape)):
+                    item_info += " , " + str(numpy_array.shape[i])
+                item_info += "]"
+            else:
+                item_info += str(numpy_array.shape[0]) + "]"
+
+            logging.info(item_info)
 
 
 def print_hdf5_file(input_file: str):
