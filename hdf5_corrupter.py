@@ -37,13 +37,13 @@ def print_hdf5_item(item: tuple, prefix: str):
         # print(numpy_array)
         if numpy_array is not None:
             item_info += " --- Dimensions: ["
-            if numpy_array.ndim > 1:
+            if numpy_array.ndim > 0:
                 item_info += str(numpy_array.shape[0])
                 for i in range(1, len(numpy_array.shape)):
                     item_info += " , " + str(numpy_array.shape[i])
                 item_info += "]"
             else:
-                item_info += str(numpy_array.shape[0]) + "]"
+                item_info += "0]"
 
             logging.info(item_info)
 
