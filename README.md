@@ -11,7 +11,7 @@ Where the possible arguments are:
  - -t | -injectionType type, where type can be either \"percentage\" or \"count\""
  - -k | -injectionTries value, is either a real number between [0-1] or a int > 0, depending if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1.
 
-If "injectionType" or "injectionTries" are gives as arguments they will overwrite their equivalents in the config file.
+If "injectionType" or "injectionTries" are given as arguments, they will overwrite their equivalents in the config file.
 
 The .yaml configuration file must have the following entries:
 - *hdf5_file*, the path to the hdf5 file to corrupt
@@ -48,4 +48,6 @@ Examples of ussage:
 >\>python3 hdf5_corrupter.py -h  
 >\>python3 hdf5_corrupter.py -c "config-pytorch.yaml"  
 >\>python3 hdf5_corrupter.py -c "config-pytorch.yaml" -p  
+>\>python3 hdf5_corrupter.py -c "config-pytorch.yaml" -t "count" -k 34
+>\>python3 hdf5_corrupter.py -c "config-pytorch.yaml" -t "percentage" -k 0.00004
 
