@@ -1,13 +1,13 @@
 import h5py
 import numpy as np
 import sys, getopt
-from os import path
+import os
 import config_file_reader
 import globals
 import corrupter
 import logging
+from datetime import datetime
 
-logging.basicConfig(filename='corruptionLog.txt', filemode='w', format='%(levelname)s - %(message)s', level=logging.DEBUG)
 
 def print_tool_ussage_and_exit():
     print("Correct usage of the tool: ")
@@ -50,7 +50,7 @@ def print_hdf5_item(item: tuple, prefix: str):
 
 def print_hdf5_file(input_file: str):
     logging.info("Printing only the HDF5 file")
-    if path.exists(input_file):
+    if os.path.exists(input_file):
         with h5py.File(input_file, 'r') as hdf:
             base_items = list(hdf.items())
             for item in base_items:
@@ -81,7 +81,7 @@ def count_hdf5_item_entries(item: tuple):
 def count_hdf5_file_entries(input_file: str):
     count = 0
     logging.info("Counting number of entries in the file")
-    if path.exists(input_file):
+    if os.path.exists(input_file):
         with h5py.File(input_file, 'r') as hdf:
             base_items = list(hdf.items())
             for item in base_items:
@@ -112,7 +112,7 @@ def __get_hdf5_file_leaf_locations(item: tuple, leaf_locations: list, prefix: st
 def get_hdf5_file_leaf_locations(input_file: str):
     leaf_locations = []
     logging.info("Calculating locations to inject errors in the file")
-    if path.exists(input_file):
+    if os.path.exists(input_file):
         with h5py.File(input_file, 'r') as hdf:
             base_items = list(hdf.items())
             for item in base_items:
@@ -129,7 +129,7 @@ def main():
     argument_list = sys.argv[1:]
     short_options = "hc:p"
     long_options = ["help", "configFile=", "printOnly"]
-    config_file = ''
+    config_file_path = ''
     try:
         arguments, values = getopt.getopt(argument_list, short_options, long_options)
     except getopt.error as err:
@@ -141,14 +141,20 @@ def main():
     # Validate argument
     for current_argument, current_value in arguments:
         if current_argument in ("-c", "--configFile"):
-            config_file = current_value
+            config_file_path = current_value
         if current_argument in ("-p", "--printOnly"):
             globals.PRINT_ONLY = True
         elif current_argument in ("-h", "--help"):
             print_tool_ussage_and_exit()
 
+    config_file_name = os.path.basename(config_file_path).rsplit('.', 1)[0]
+    now = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
+    log_file_name = config_file_name + "_" + now + "_corruption.log"
+    logging.basicConfig(filename=log_file_name, filemode='w', format='%(levelname)s - %(message)s',
+                        level=logging.DEBUG)
+
     logging.info("Arguments are correct")
-    config_file_reader.read_config_file(config_file)
+    config_file_reader.read_config_file(config_file_path)
 
     if globals.PRINT_ONLY:
         print_hdf5_file(globals.HDF5_FILE)

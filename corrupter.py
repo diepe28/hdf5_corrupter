@@ -96,7 +96,7 @@ def corrupt_dataset(dataset, corruption_prob: float):
     return success
 
 
-def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_prob: float,
+def corrupt_hdf5_file(input_file: str, locations_to_corrupt, corruption_prob: float,
                       num_injection_tries: int, prints_enabled: bool = True):
     if path.exists(input_file):
         errors_injected = 0
