@@ -48,6 +48,6 @@ Examples of ussage:
 >\>python3 hdf5_corrupter.py -h  
 >\>python3 hdf5_corrupter.py -c "config-pytorch.yaml"  
 >\>python3 hdf5_corrupter.py -c "config-pytorch.yaml" -p  
->\>python3 hdf5_corrupter.py -c "config-pytorch.yaml" -t "count" -k 34
+>\>python3 hdf5_corrupter.py -c "config-pytorch.yaml" -t "count" -k 34  
 >\>python3 hdf5_corrupter.py -c "config-pytorch.yaml" -t "percentage" -k 0.00004
 
