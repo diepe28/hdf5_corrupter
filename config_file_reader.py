@@ -8,8 +8,9 @@ def log_options(corrupt_locations):
     logging.info("")
     logging.info("********** Options **********")
     logging.info(" " + globals.STR_HDF5_FILE + ": " + str(globals.HDF5_FILE))
-    logging.info(" " + globals.STR_PROB + ": " + str(globals.PROB))
-    logging.info(" " + globals.STR_MAX_CORRUPTION_PERCENTAGE + ": " + str(globals.MAX_CORRUPTION_PERCENTAGE))
+    logging.info(" " + globals.STR_INJECTION_PROBABILITY + ": " + str(globals.INJECTION_PROBABILITY))
+    logging.info(" " + globals.STR_INJECTION_TYPE + ": " + str(globals.INJECTION_TYPE))
+    logging.info(" " + globals.STR_INJECTION_TRIES + ": " + str(globals.INJECTION_TRIES))
     logging.info(" " + globals.STR_FIRST_BYTE + ": " + str(globals.FIRST_BYTE))
     logging.info(" " + globals.STR_LAST_BYTE + ": " + str(globals.LAST_BYTE))
     logging.info(" " + globals.STR_BIT + ": " + str(globals.BIT))
@@ -27,8 +28,11 @@ def read_config_file(config_file_path: str):
         logging.info("Reading config file: " + config_file_path)
         data = yaml.load(f, Loader=yaml.Loader)
         globals.HDF5_FILE = data[globals.STR_HDF5_FILE]
-        globals.PROB = float(data[globals.STR_PROB])
-        globals.MAX_CORRUPTION_PERCENTAGE = float(data[globals.STR_MAX_CORRUPTION_PERCENTAGE])
+
+        globals.INJECTION_PROBABILITY = float(data[globals.STR_INJECTION_PROBABILITY])
+        globals.INJECTION_TYPE = data[globals.STR_INJECTION_TYPE]
+        globals.INJECTION_TRIES = float(data[globals.STR_INJECTION_TRIES])
+
         globals.FIRST_BYTE = int(data[globals.STR_FIRST_BYTE])
         globals.LAST_BYTE = int(data[globals.STR_LAST_BYTE])
         globals.BIT = int(data[globals.STR_BIT])
@@ -58,3 +62,24 @@ def check_for_error_in_values():
             globals.BIT > 7:
         logging.error("bit must be a value between [0-7] or -1 for random")
         sys.exit(2)
+
+    if globals.INJECTION_TYPE not in globals.CORRUPTION_TYPE_VALUES:
+        logging.error("Corruption type not recognized. It must be either \"percentage\" or \"count\"")
+        sys.exit(2)
+
+    if globals.INJECTION_TYPE == globals.STR_PERCENTAGE and \
+            (globals.INJECTION_TRIES < 0 or globals.INJECTION_TRIES > 1):
+        logging.error("Injection tries for corruption type \"percentage\" must be a value between [0-1]")
+        sys.exit(2)
+
+    if globals.INJECTION_TYPE == globals.STR_COUNT:
+        # truncate to integer value
+        int_value = int(globals.INJECTION_TRIES)
+        logging.info("Truncating  " + str(globals.INJECTION_TRIES) + " to " + str(int_value))
+        globals.INJECTION_TRIES = int_value
+
+        if globals.INJECTION_TRIES < 1:
+            logging.error("Injection tries for corruption type \"count\" must be a positive integer")
+            sys.exit(2)
+
+    # and implement the functionality when corruption type is count

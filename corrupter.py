@@ -113,19 +113,17 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_pro
                 dataset = hdf.get(location)
                 if dataset is not None:
                     # if prints_enabled:
-                    # numpy_array = np.array(dataset)
-                    # if prints_enabled:
-                    #    print("dataset before")
-                    #    print(numpy_array)
+                    #   numpy_array = np.array(dataset)
+                    #   print("dataset before")
+                    #   print(numpy_array)
 
                     if corrupt_dataset(dataset, corruption_prob):
                         errors_injected += 1
 
                     # if prints_enabled:
-                    # numpy_array = np.array(dataset)
-                    # if prints_enabled:
-                    #    print("dataset after")
-                    #    print(numpy_array)
+                    #   numpy_array = np.array(dataset)
+                    #   print("dataset after")
+                    #   print(numpy_array)
                 else:
                     logging.error(str(location) + " doesn't exist or it is not supported for error injection")
 
@@ -134,30 +132,3 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt: str, corruption_pro
     else:
         logging.error("Specified file does not exist... exiting the tool")
         sys.exit(2)
-
-
-def testCorruptNumpyArrays():
-    arr = np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])
-    print("narray before")
-    print(arr)
-    corrupt_dataset(arr)
-    print("narray after")
-    print(arr)
-
-    arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
-    print("narray before")
-    print(arr)
-    corrupt_dataset(arr)
-    print("narray after")
-    print(arr)
-
-    arr = np.array([[1, 2, 3, 4, 5],
-                    [6, 7, 8, 9, 10],
-                    [11, 12, 13, 14, 15]])
-
-    print("narray before")
-    print(arr)
-    corrupt_dataset(arr)
-    print("narray after")
-    print(arr)
-    sys.exit(2)

@@ -138,7 +138,7 @@ def main():
     if argument_list.__len__() == 0 or argument_list.__len__() > long_options.__len__():
         print_tool_ussage_and_exit()
 
-    # Evaluate given options
+    # Validate argument
     for current_argument, current_value in arguments:
         if current_argument in ("-c", "--configFile"):
             config_file = current_value
@@ -159,12 +159,17 @@ def main():
 
         file_entries_count = count_hdf5_file_entries(globals.HDF5_FILE)
         # calculates the number of injection tries, based on the desired corruption percentage
-        num_injection_tries = int(globals.MAX_CORRUPTION_PERCENTAGE * file_entries_count / 100)
+        if globals.INJECTION_TYPE == globals.STR_PERCENTAGE:
+            num_injection_tries = int(globals.INJECTION_TRIES * file_entries_count / 100)
+        # Corruption type = "Count"
+        else:
+            num_injection_tries = globals.INJECTION_TRIES
+
         logging.info("Will inject at most: " + str(num_injection_tries) + " errors")
         logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BYTE) + "-" + str(globals.LAST_BYTE) + "]")
 
         errors_injected = corrupter.corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
-                                                      globals.PROB, num_injection_tries, False)
+                                                      globals.INJECTION_PROBABILITY, num_injection_tries, False)
 
         logging.info("File corrupted: " + str(errors_injected * 100 / file_entries_count) +
                      " %, with a total of: " + str(errors_injected) + " errors injected")

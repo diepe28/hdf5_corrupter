@@ -11,8 +11,11 @@ Where the possible arguments are:
 
 The .yaml configuration file must have the following entries:
 - *hdf5_file*, the path to the hdf5 file to corrupt
-- *prob*, probability to inject corruption
-- *corruption_percentage*, value between 0-1, it represents the percentage of entries to corrupt (based on the HDF5 amount of entries)
+
+- *injection_probability*, probability to inject an error at each value
+- *injection_type*, is one of the following strings {"percentage", "count"}
+- *injection_tries*,is either a real number between [0-1] or a int > 0, depending if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1.
+
 - *first_byte*, first byte to inject errors (0-7) -1 random, it must be <= than last_byte.
 - *last_byte*, last byte to inject errors (0-7) -1 random, it must be >= than first_byte. If it's the same, injection will only happen on that byte. Note that first_byte = 0, it's the same as first_byte = -1. Note that last_byte = 7,  it's the same as last_byte = -1
 - *bit*, which bit is faulty (0-7) -1 random
@@ -22,8 +25,9 @@ The .yaml configuration file must have the following entries:
 
 Example of a .yaml configuration file:  
 >hdf5_file: "/home/someUser/Documents/hdf5_files/model_epoch_2_chainer.h5"  
->prob: 1e-8  
->max_corruption_percentage: 1e-3  
+>injection_probability: 1e-8  
+>injection_type: "count"  
+>injection_tries: 5  
 >first_byte: -1  
 >last_byte: -1  
 >bit: -1  
