@@ -30,8 +30,13 @@ def read_config_file(config_file_path: str):
         globals.HDF5_FILE = data[globals.STR_HDF5_FILE]
 
         globals.INJECTION_PROBABILITY = float(data[globals.STR_INJECTION_PROBABILITY])
-        globals.INJECTION_TYPE = data[globals.STR_INJECTION_TYPE]
-        globals.INJECTION_TRIES = float(data[globals.STR_INJECTION_TRIES])
+        # read from config file, only if it was not given as an argument
+        if globals.INJECTION_TYPE == "":
+            globals.INJECTION_TYPE = data[globals.STR_INJECTION_TYPE]
+
+        # read from config file, only if it was not given as an argument
+        if globals.INJECTION_TRIES == -1:
+            globals.INJECTION_TRIES = float(data[globals.STR_INJECTION_TRIES])
 
         globals.FIRST_BYTE = int(data[globals.STR_FIRST_BYTE])
         globals.LAST_BYTE = int(data[globals.STR_LAST_BYTE])

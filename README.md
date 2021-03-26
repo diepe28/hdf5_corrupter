@@ -8,6 +8,10 @@ Where the possible arguments are:
  - -h | -help, optional argument, prints the ussage of the tool
  - -c | -configFile "path/to/config.yaml", mandatory argument (unless used with -h)
  - -p | -printOnly, optional argument, prints the contents of the hdf5 file specified at the config file
+ - -t | -injectionType type, where type can be either \"percentage\" or \"count\""
+ - -k | -injectionTries value, is either a real number between [0-1] or a int > 0, depending if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1.
+
+If "injectionType" or "injectionTries" are gives as arguments they will overwrite their equivalents in the config file.
 
 The .yaml configuration file must have the following entries:
 - *hdf5_file*, the path to the hdf5 file to corrupt

@@ -14,6 +14,8 @@ def print_tool_ussage_and_exit():
     print("> hdf5_corrupter.py <arguments>, where the possible arguments are:")
     print("   -h | -help, optional argument, prints this message")
     print("   -c | -configFile \"path/to/config.yaml\", mandatory argument, the tool always needs a config.yaml")
+    print("   -t | -injectionType <type>, where type can be either \"percentage\" or \"count\"")
+    print("   -k | -injectionTries <value>, value in [0-1] or int > 0, depending on injection_type, respectively.")
     print("   -p | -printOnly, optional argument, prints the contents of the hdf5 file specified at config file")
     logging.critical("Wrong use of the tool... exiting")
     sys.exit(2)
@@ -127,15 +129,16 @@ def get_hdf5_file_leaf_locations(input_file: str):
 
 def main():
     argument_list = sys.argv[1:]
-    short_options = "hc:p"
-    long_options = ["help", "configFile=", "printOnly"]
+    short_options = "hc:t:k:p"
+    long_options = ["help", "configFile=", "injectionType=", "injectionTries=", "printOnly"]
     config_file_path = ''
     try:
         arguments, values = getopt.getopt(argument_list, short_options, long_options)
     except getopt.error as err:
         print_tool_ussage_and_exit()
 
-    if argument_list.__len__() == 0 or argument_list.__len__() > long_options.__len__():
+    max_arg_count = 8 # all 5 arguments and the 3 values
+    if argument_list.__len__() == 0 or argument_list.__len__() > 8:
         print_tool_ussage_and_exit()
 
     # Validate argument
@@ -144,6 +147,10 @@ def main():
             config_file_path = current_value
         if current_argument in ("-p", "--printOnly"):
             globals.PRINT_ONLY = True
+        if current_argument in ("-t", "--injectionType"):
+            globals.INJECTION_TYPE = current_value
+        if current_argument in ("-k", "--injectionTries"):
+            globals.INJECTION_TRIES = float(current_value)
         elif current_argument in ("-h", "--help"):
             print_tool_ussage_and_exit()
 
