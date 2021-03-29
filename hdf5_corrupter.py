@@ -8,6 +8,7 @@ import corrupter
 import logging
 from datetime import datetime
 
+os.environ["OMP_NUM_THREADS"] = "1"
 
 def print_tool_ussage_and_exit():
     print("Correct usage of the tool: ")
@@ -154,9 +155,10 @@ def main():
         elif current_argument in ("-h", "--help"):
             print_tool_ussage_and_exit()
 
+    path = os.path.dirname(config_file_path)
     config_file_name = os.path.basename(config_file_path).rsplit('.', 1)[0]
-    now = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
-    log_file_name = config_file_name + "_" + now + "_corruption.log"
+    now = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+    log_file_name = path +"/"+config_file_name + "_" + now + "_corruption.log"
     logging.basicConfig(filename=log_file_name, filemode='w', format='%(levelname)s - %(message)s',
                         level=logging.DEBUG)
 
