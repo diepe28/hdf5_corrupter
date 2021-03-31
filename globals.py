@@ -1,8 +1,8 @@
-INJECTION_PROBABILITY = 1e-7
+INJECTION_PROBABILITY = -1
 INJECTION_TYPE = ""
 INJECTION_TRIES = -1
 
-PRINT_ONLY = False
+ONLY_PRINT = False
 FIRST_BYTE = -1     # -1 means random
 LAST_BYTE = -1      # -1 means random
 BIT = -1            # -1 means random
@@ -10,8 +10,11 @@ USE_RANDOM_LOCATIONS = True
 ALLOW_NaN_VALUES = False
 LOCATIONS_TO_CORRUPT = []
 HDF5_FILE = ""
+LOG_FILE_PATH = ""
 
 STR_HDF5_FILE = "hdf5_file"
+STR_LOG_FILE_PATH = "log_file_path"
+
 STR_INJECTION_PROBABILITY = "injection_probability"
 STR_INJECTION_TYPE = "injection_type"
 STR_INJECTION_TRIES = "injection_tries"
