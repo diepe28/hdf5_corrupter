@@ -32,7 +32,6 @@ def diff_print(dd: Diff, prefix: str):
 
 
 def compare_datasets(before_dataset, after_dataset):
-
     if before_dataset.ndim != after_dataset.ndim:
         return Diff(0, 0)
 
@@ -40,14 +39,14 @@ def compare_datasets(before_dataset, after_dataset):
         diff_count = 1 if before_dataset[()] != after_dataset[()] else 0
         entries_count = 1
     else:
-        # diffs_narray = np.subtract(before_dataset, after_dataset)
         before_narray = np.array(before_dataset)
         after_narray = np.array(after_dataset)
-        diffs_narray = before_narray - after_narray
 
-        #actual_diffs = filter(lambda x: x != 0, diffs_narray)
-        actual_diffs = [x for x in diffs_narray.flatten() if x != 0]
-        diff_count = actual_diffs.__len__()
+        diffs = [x for (x, y) in zip(before_narray.flatten(), after_narray.flatten()) if x != y]
+        diff_count = diffs.__len__()
+
+        #diffs = np.isclose(before_narray.flatten(), after_narray.flatten(), rtol=1e-10, equal_nan=False)
+        #diff_count = (diffs == False).sum()
         entries_count = np.prod(before_dataset.shape)
 
     return Diff(entries_count, diff_count)
@@ -118,8 +117,11 @@ def main():
     print(" Before File: " + before_file_path)
     print(" After File:  " + after_file_path)
     file_diff = compare_files(before_file_path, after_file_path)
-    print(" ")
+    print("\n--Summary of comparison--")
     diff_print(file_diff, " Files have: ")
+
+    if file_diff.diff_count == 0:
+        print("No differences found between the two files")
 
 
 if __name__ == "__main__":
