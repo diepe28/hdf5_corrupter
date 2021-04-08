@@ -26,11 +26,8 @@ def float_to_bin(value):  # For testing.
 
 
 def change_bit_in_binary(binary: str, index: int):
-    # print("Flipping bit at position:" + str(index))
-    reversed_binary = binary[::-1]
-    bit = "1" if reversed_binary[index] == '0' else "0"
-    reversed_binary = reversed_binary[:index] + bit + reversed_binary[index + 1:]
-    binary = reversed_binary[::-1]
+    bit_flipped = "1" if binary[index] == '0' else "0"
+    binary = binary[:index] + bit_flipped + binary[index + 1:]
     return binary
 
 
@@ -38,25 +35,34 @@ def corrupt_value(val, corruption_prob: float):
     if random.random() < corruption_prob:
         str_val_type = str(type(val))
 
-        byte = randint(globals.FIRST_BYTE, globals.LAST_BYTE)
-        bit = randint(0, 7) if globals.BIT == -1 else globals.BIT
+        # if first bit (sign-bit) not in range, then increase by 1 the start of range
+        if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT > 0:
+            globals.FIRST_BIT -= 1
+
+        chosen_bit = randint(globals.FIRST_BIT, globals.LAST_BIT)
+
+        # if chosen bit is new first_bit, the set it to the sign-bit
+        if globals.ALLOW_SIGN_CHANGE and chosen_bit == globals.FIRST_BIT:
+            chosen_bit = 0
 
         if "int" in str_val_type:
             binary = str(bin(val))[2:]
-            offset = randint(0, len(binary)-1)
-            new_binary = change_bit_in_binary(binary, offset)
+            chosen_bit = randint(0, len(binary)-1)
+            new_binary = change_bit_in_binary(binary, chosen_bit)
             new_val = int(new_binary, 2)
-            logging.debug("Location value was corrupted from " + str(val) + " --> " + str(new_val))
+            logging.debug("Int location value was corrupted at bit: " + str(chosen_bit) +
+                          "  Delta> " + str(val) + " --> " + str(new_val))
             return new_val, True
         else:
             binary = float_to_bin(val)
-            offset = byte * 8 + bit
-            new_binary = change_bit_in_binary(binary, offset)
+            new_binary = change_bit_in_binary(binary, chosen_bit)
             new_val = bin_to_float(new_binary)
             if not globals.ALLOW_NaN_VALUES and (math.isnan(new_val) or math.isinf(new_val)):
                 logging.debug("Could not corrupt value at the index because it was a NaN or Inf... trying again")
                 return corrupt_value(val, corruption_prob)
-            logging.debug("Location value was corrupted from " + str(val) + " --> " + str(new_val))
+
+            logging.debug("Float location value was corrupted at bit: " + str(chosen_bit) +
+                          "  Delta> " + str(val) + " --> " + str(new_val))
             return new_val, True
     logging.debug("Did not corrupt value at the index")
     return val, False

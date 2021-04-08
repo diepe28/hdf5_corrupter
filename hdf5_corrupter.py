@@ -96,7 +96,7 @@ def main():
             num_injection_tries = globals.INJECTION_TRIES
 
         logging.info("Will inject at most: " + str(num_injection_tries) + " errors")
-        logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BYTE) + "-" + str(globals.LAST_BYTE) + "]")
+        logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BIT) + "-" + str(globals.LAST_BIT) + "]")
 
         errors_injected = corrupter.corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
                                                       globals.INJECTION_PROBABILITY, num_injection_tries, False)

@@ -23,9 +23,9 @@ The .yaml configuration file must have the following entries:
 
 - *log_file_path*, path where to save the log files.
 
-- *first_byte*, first byte to inject errors (0-7) -1 random, it must be <= than last_byte.
-- *last_byte*, last byte to inject errors (0-7) -1 random, it must be >= than first_byte. If it's the same, injection will only happen on that byte. Note that first_byte = 0, it's the same as first_byte = -1. Note that last_byte = 7,  it's the same as last_byte = -1
-- *bit*, which bit is faulty (0-7) -1 random
+- *first_bit*, first bit to inject errors (0-63), leftmost is sign-bit, next 11 are exp bits and the rest is mantissa. it must be <= than last_bit.
+- *last_bit*, last bit to inject errors (0-63), it must be >= than first_byte. If both values are the same, injection will only happen on that bit.
+- *allow_sign_change*, True,   when corruption is on float value, even if the sign-bit (0) is not included, in the above range, it will also enable bit flips on it. False,  it respects the above range.
 - *allow_NaN_values*, when flipping a bit of the in a double, the resulting binary can represent a NaN or Inf. If set to False, the corruption mechanism will never produce such values
 - *use_random_locations*, choose random locations on the file to inject errors, if true it will ignore the locations_to_corrupt
 - *locations_to_corrupt*, list of locations to try to inject errors
@@ -36,9 +36,10 @@ Example of a .yaml configuration file:
 >injection_type: "count"  
 >log_file_path: "/home/someUser/Documents/logFiles/"  
 >injection_tries: 5  
->first_byte: -1  
->last_byte: -1  
->bit: -1  
+>first_bit: 0  
+>last_bit: 63  
+>allow_sign_change: True  
+>allow_NaN_values: True
 use_random_locations: False  
 >locations_to_corrupt:  
 >  \- "/predictor/conv1/W"  

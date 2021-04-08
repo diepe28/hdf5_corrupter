@@ -12,9 +12,9 @@ def log_options():
     logging.info(" " + globals.STR_INJECTION_PROBABILITY + ": " + str(globals.INJECTION_PROBABILITY))
     logging.info(" " + globals.STR_INJECTION_TYPE + ": " + str(globals.INJECTION_TYPE))
     logging.info(" " + globals.STR_INJECTION_TRIES + ": " + str(globals.INJECTION_TRIES))
-    logging.info(" " + globals.STR_FIRST_BYTE + ": " + str(globals.FIRST_BYTE))
-    logging.info(" " + globals.STR_LAST_BYTE + ": " + str(globals.LAST_BYTE))
-    logging.info(" " + globals.STR_BIT + ": " + str(globals.BIT))
+    logging.info(" " + globals.STR_FIRST_BIT + ": " + str(globals.FIRST_BIT))
+    logging.info(" " + globals.STR_LAST_BIT + ": " + str(globals.LAST_BIT))
+    logging.info(" " + globals.STR_ALLOW_SIGN_CHANGE + ": " + str(globals.ALLOW_SIGN_CHANGE))
     logging.info(" " + globals.STR_ALLOW_NaN_VALUES + ": " + str(globals.ALLOW_NaN_VALUES))
     logging.info(" " + globals.STR_USE_RANDOM_LOCATIONS + ": " + str(globals.USE_RANDOM_LOCATIONS))
     logging.info(" " + globals.STR_LOCATIONS_TO_CORRUPT + ":")
@@ -48,31 +48,22 @@ def read_config_file(config_file_path: str):
             globals.INJECTION_TRIES = float(data[globals.STR_INJECTION_TRIES])
 
         # values only available through config file
-        globals.FIRST_BYTE = int(data[globals.STR_FIRST_BYTE])
-        globals.LAST_BYTE = int(data[globals.STR_LAST_BYTE])
-        globals.BIT = int(data[globals.STR_BIT])
+        globals.FIRST_BIT = int(data[globals.STR_FIRST_BIT])
+        globals.LAST_BIT = int(data[globals.STR_LAST_BIT])
+        globals.ALLOW_SIGN_CHANGE = bool(data[globals.STR_ALLOW_SIGN_CHANGE])
         globals.ALLOW_NaN_VALUES = bool(data[globals.STR_ALLOW_NaN_VALUES])
         globals.USE_RANDOM_LOCATIONS = bool(data[globals.STR_USE_RANDOM_LOCATIONS])
         globals.LOCATIONS_TO_CORRUPT = data[globals.STR_LOCATIONS_TO_CORRUPT]
 
-    # making the byte interval considering -1
-    globals.FIRST_BYTE = 0 if globals.FIRST_BYTE == -1 else globals.FIRST_BYTE
-    globals.LAST_BYTE = 7 if globals.LAST_BYTE == -1 else globals.LAST_BYTE
-
 
 def check_for_error_in_values():
     if \
-            globals.FIRST_BYTE > globals.LAST_BYTE or \
-            (globals.FIRST_BYTE < 0 and globals.FIRST_BYTE != -1) or \
-            globals.FIRST_BYTE > 7 or \
-            (globals.LAST_BYTE < 0 and globals.LAST_BYTE != -1) or \
-            globals.LAST_BYTE > 7:
-        logging.error("first_byte and last_byte must be an interval between [0-7] or -1 for random")
-        sys.exit(2)
-
-    if (globals.BIT < 0 and globals.BIT != -1) or \
-            globals.BIT > 7:
-        logging.error("bit must be a value between [0-7] or -1 for random")
+            globals.FIRST_BIT > globals.LAST_BIT or \
+            globals.FIRST_BIT < 0 or \
+            globals.FIRST_BIT > 63 or \
+            globals.LAST_BIT < 0 or \
+            globals.LAST_BIT > 63:
+        logging.error("first_bit and last_bit must be an interval between [0-63]")
         sys.exit(2)
 
     if globals.INJECTION_TYPE not in globals.CORRUPTION_TYPE_VALUES:
