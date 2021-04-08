@@ -9,6 +9,7 @@ import math
 from os import path
 from codecs import decode
 from random import randint
+from datetime import datetime
 
 
 def bin_to_float(b):
@@ -32,6 +33,7 @@ def change_bit_in_binary(binary: str, index: int):
 
 
 def corrupt_value(val, corruption_prob: float):
+    random.seed(datetime.now())
     if random.random() < corruption_prob:
         str_val_type = str(type(val))
 
@@ -70,6 +72,7 @@ def corrupt_value(val, corruption_prob: float):
 
 # given a dataset, returns a random index based on its shape
 def __get_random_indexes(dataset):
+    random.seed(datetime.now())
     dimensions = 1 if dataset.ndim == 0 else dataset.ndim
     indexes = [0] * dimensions
     current_dim = 0
