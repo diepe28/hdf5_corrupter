@@ -36,14 +36,10 @@ def corrupt_value(val, corruption_prob: float):
     random.seed(datetime.now())
     if random.random() < corruption_prob:
         str_val_type = str(type(val))
-
-        # if first bit (sign-bit) not in range, then increase by 1 the start of range
-        if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT > 0:
-            globals.FIRST_BIT -= 1
-
         chosen_bit = randint(globals.FIRST_BIT, globals.LAST_BIT)
 
-        # if chosen bit is new first_bit, the set it to the sign-bit
+        # if chosen bit is new first_bit (first_bit should have been decreased by 1 when reading args)
+        # then chosen bit should actually be the sign-bit (0)
         if globals.ALLOW_SIGN_CHANGE and chosen_bit == globals.FIRST_BIT:
             chosen_bit = 0
 
@@ -63,6 +59,8 @@ def corrupt_value(val, corruption_prob: float):
                 logging.debug("Could not corrupt value at the index because it was a NaN or Inf... trying again")
                 return corrupt_value(val, corruption_prob)
 
+            if chosen_bit == 5:
+                chosen_bit += 0
             logging.debug("Float location value was corrupted at bit: " + str(chosen_bit) +
                           "  Delta> " + str(val) + " --> " + str(new_val))
             return new_val, True

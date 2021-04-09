@@ -55,6 +55,10 @@ def read_config_file(config_file_path: str):
         globals.USE_RANDOM_LOCATIONS = bool(data[globals.STR_USE_RANDOM_LOCATIONS])
         globals.LOCATIONS_TO_CORRUPT = data[globals.STR_LOCATIONS_TO_CORRUPT]
 
+        # if first bit (sign-bit) not in range, then increase by 1 the start of range
+        if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT > 0:
+            globals.FIRST_BIT -= 1
+
 
 def check_for_error_in_values():
     if \
