@@ -35,8 +35,8 @@ def read_config_file(config_file_path: str):
         if globals.LOG_FILE_PATH == "":
             globals.LOG_FILE_PATH = data[globals.STR_LOG_FILE_PATH]
 
-        if not globals.LOG_FILE_PATH.endswith('/'):
-            globals.LOG_FILE_PATH += "/"
+        #if not globals.LOG_FILE_PATH.endswith('/'):
+        #    globals.LOG_FILE_PATH += "/"
 
         if globals.INJECTION_PROBABILITY == -1:
             globals.INJECTION_PROBABILITY = float(data[globals.STR_INJECTION_PROBABILITY])
