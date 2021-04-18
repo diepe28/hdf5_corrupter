@@ -59,8 +59,6 @@ def corrupt_value(val, corruption_prob: float):
                 logging.debug("Could not corrupt value at the index because it was a NaN or Inf... trying again")
                 return corrupt_value(val, corruption_prob)
 
-            if chosen_bit == 5:
-                chosen_bit += 0
             logging.debug("Float location value was corrupted at bit: " + str(chosen_bit) +
                           "  Delta> " + str(val) + " --> " + str(new_val))
             return new_val, True
