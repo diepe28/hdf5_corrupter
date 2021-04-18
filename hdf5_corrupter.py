@@ -80,6 +80,10 @@ def main():
     config_file_reader.check_for_error_in_values()
     config_file_reader.log_options()
 
+    # if first bit (sign-bit) not in range and ALLOW_SIGN_CHANGE is true, then increase by 1 the start of range
+    if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT > 0:
+        globals.FIRST_BIT -= 1
+
     if globals.ONLY_PRINT:
         hdf5_common.print_hdf5_file(globals.HDF5_FILE)
     else:
