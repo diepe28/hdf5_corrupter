@@ -1,5 +1,4 @@
-import h5py
-import numpy as np
+import json
 import sys, getopt
 import os
 import config_file_reader
@@ -10,6 +9,7 @@ import logging
 from datetime import datetime
 
 os.environ["OMP_NUM_THREADS"] = "1"
+
 
 def print_tool_ussage_and_exit():
     print("Correct usage of the tool: ")
@@ -26,17 +26,18 @@ def print_tool_ussage_and_exit():
           "\t*Overwrites value from config file*")
     print("   -k | --injectionTries <value>, value in [0-1] or int > 0, depending on injection_type, respectively."
           "\t*Overwrites value from config file*")
-
     print("   -o | --onlyPrint, optional argument, prints the contents of the hdf5 file specified and exits")
+    print("   -s | --saveInjectionSequence, optional argument, saves the injection sequence to a file")
     logging.critical("Wrong use of the tool... exiting")
     sys.exit(2)
+
 
 # params: -c "config-chainer.yaml" -t "percentage" -k 0.005 -o
 def main():
     argument_list = sys.argv[1:]
-    short_options = "hc:f:l:t:k:p:o"
+    short_options = "hc:f:l:t:k:p:os"
     long_options = ["help", "configFile=", "hdf5File=", "logFilePath=", "injectionType=", "injectionTries=",
-                    "injectionProbability=",  "onlyPrint"]
+                    "injectionProbability=",  "onlyPrint", "saveInjectionSequence"]
     config_file_path = ''
     try:
         arguments, values = getopt.getopt(argument_list, short_options, long_options)
@@ -55,14 +56,16 @@ def main():
             globals.HDF5_FILE = current_value
         if current_argument in ("-l", "--logFilePath"):
             globals.LOG_FILE_PATH = current_value
-        if current_argument in ("-o", "--onlyPrint"):
-            globals.ONLY_PRINT = True
-        if current_argument in ("-p", "--injectionProbability"):
-            globals.INJECTION_PROBABILITY = float(current_value)
         if current_argument in ("-t", "--injectionType"):
             globals.INJECTION_TYPE = current_value
         if current_argument in ("-k", "--injectionTries"):
             globals.INJECTION_TRIES = float(current_value)
+        if current_argument in ("-p", "--injectionProbability"):
+            globals.INJECTION_PROBABILITY = float(current_value)
+        if current_argument in ("-o", "--onlyPrint"):
+            globals.ONLY_PRINT = True
+        if current_argument in ("-s", "--saveInjectionSequence"):
+            globals.SAVE_INJECTION_SEQUENCE = True
         elif current_argument in ("-h", "--help"):
             print_tool_ussage_and_exit()
 
@@ -87,13 +90,18 @@ def main():
     if globals.ONLY_PRINT:
         hdf5_common.print_hdf5_file(globals.HDF5_FILE)
     else:
+        globals.ALL_LOCATIONS = hdf5_common.get_hdf5_file_leaf_locations(globals.HDF5_FILE)
+
         if globals.USE_RANDOM_LOCATIONS:
             logging.info("Will inject errors at random locations")
-            globals.LOCATIONS_TO_CORRUPT = hdf5_common.get_hdf5_file_leaf_locations(globals.HDF5_FILE)
+            globals.LOCATIONS_TO_CORRUPT = globals.ALL_LOCATIONS
+        else:
+            globals.LOCATIONS_TO_CORRUPT = hdf5_common.get_full_location_paths(globals.LOCATIONS_TO_CORRUPT,
+                                                                               globals.ALL_LOCATIONS)
 
         file_entries_count = hdf5_common.count_hdf5_file_entries(globals.HDF5_FILE)
         # calculates the number of injection tries, based on the desired corruption percentage
-        if globals.INJECTION_TYPE == globals.STR_PERCENTAGE:
+        if globals.INJECTION_TYPE == globals.PERCENTAGE_STR:
             num_injection_tries = int(globals.INJECTION_TRIES * file_entries_count / 100)
         # Corruption type = "Count"
         else:
@@ -105,6 +113,11 @@ def main():
         errors_injected = corrupter.corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
                                                       globals.INJECTION_PROBABILITY, num_injection_tries, False)
 
+        # serializing injection sequence to json
+        #injection_sequence_content = json.dumps(globals.INJECTION_SEQUENCE, indent=4)
+        #injection_sequence_file_name = globals.LOG_FILE_PATH + "_" + now + "_injectionSequence.json"
+        #with open(injection_sequence_file_name, "w") as injection_sequence_file:
+        #    injection_sequence_file.write(injection_sequence_content)
         logging.info("File corrupted: " + str(errors_injected * 100 / file_entries_count) +
                      " %, with a total of: " + str(errors_injected) + " errors injected")
 

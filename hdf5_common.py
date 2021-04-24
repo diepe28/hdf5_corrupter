@@ -110,9 +110,30 @@ def get_hdf5_file_leaf_locations(input_file: str):
             for item in base_items:
                 __get_hdf5_file_leaf_locations(item, leaf_locations, "/")
     else:
-        logging.error("Specified file does not exist... exiting the tool")
+        error_message = "Specified file does not exist... exiting the tool"
+        print(error_message)
+        logging.error(error_message)
         sys.exit(2)
 
     logging.debug("Number of locations to inject errors: " + str(len(leaf_locations)))
     return leaf_locations
 
+
+# given the paths to corrupt, it calculates all the full location paths within each paths given
+# Example: locations_to_corrupt = ["conv1", "conv2"], and within each one of them there are two objects, so
+# it will return ["conv1/object1", "conv1/object2", "conv2/object1", "conv2/object2"]
+def get_full_location_paths(locations_to_corrupt: [], all_location_paths: []):
+    full_location_paths = []
+    for corruptible_location in locations_to_corrupt:
+        location_exists = False
+        for full_path in all_location_paths:
+            if full_path.startswith(corruptible_location):
+                full_location_paths.append(full_path)
+                location_exists = True
+        if not location_exists:
+            error_message = "There are no locations with the prefix: " + corruptible_location + "... exiting tool"
+            print(error_message)
+            logging.error(error_message)
+            sys.exit(2)
+
+    return full_location_paths
