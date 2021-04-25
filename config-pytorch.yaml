@@ -20,6 +20,10 @@
 #    allow_NaN_values             when flipping a bit of the in a double, the resulting binary can represent a NaN or
 #                                 Inf, if set to False, the corruption mechanism will never produce such values.
 #
+#   save_injection_sequence       If True, it saves to json all the bits that were changed for each location specified.
+#   injection_sequence_path       If used, loads the injection sequence from a json and uses those bits to corrupt the
+#                                 locations specified at the sequence.
+#
 #    use_random_locations         choose random locations on the file to inject errors,
 #                                 if true it will ignore the locations_to_corrupt
 #
@@ -35,6 +39,8 @@ first_bit: 0
 last_bit: 63
 allow_sign_change: True
 allow_NaN_values: True
+#injection_sequence_path: "/home/diego/PycharmProjects/hdf5_corrupter/injectionSequence.json"
+#save_injection_sequence: True
 use_random_locations: true
 locations_to_corrupt:
   - "/model/layer1.0.bn1.num_batches_tracked"

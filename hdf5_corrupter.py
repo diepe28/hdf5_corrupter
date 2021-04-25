@@ -1,6 +1,7 @@
 import json
 import sys, getopt
 import os
+from os import path
 import config_file_reader
 import globals
 import corrupter
@@ -27,31 +28,30 @@ def print_tool_ussage_and_exit():
     print("   -k | --injectionTries <value>, value in [0-1] or int > 0, depending on injection_type, respectively."
           "\t*Overwrites value from config file*")
     print("   -o | --onlyPrint, optional argument, prints the contents of the hdf5 file specified and exits")
-    print("   -s | --saveInjectionSequence, optional argument, saves the injection sequence to a file")
+    print("   -s | --saveInjectionSequence, optional, incompatible with -i, saves the injection sequence to a file")
+    print("   -i | --injectionSequencePath, optional, incompatible with -s, uses the injection sequence from the file "
+          "for the injection. If this argument is used, the following settings will be ignored: 'use_random_locations',"
+          "'locations_to_corrupt', 'injectionProbability', 'injectionType', 'injectionTries'")
     logging.critical("Wrong use of the tool... exiting")
     sys.exit(2)
 
 
-# params: -c "config-chainer.yaml" -t "percentage" -k 0.005 -o
-def main():
-    argument_list = sys.argv[1:]
-    short_options = "hc:f:l:t:k:p:os"
+def read_arguments(argument_list):
+    short_options = "hc:f:l:t:k:p:i:os"
     long_options = ["help", "configFile=", "hdf5File=", "logFilePath=", "injectionType=", "injectionTries=",
-                    "injectionProbability=",  "onlyPrint", "saveInjectionSequence"]
-    config_file_path = ''
+                    "injectionProbability=", "injectionSequencePath=", "onlyPrint", "saveInjectionSequence"]
     try:
         arguments, values = getopt.getopt(argument_list, short_options, long_options)
     except getopt.error as err:
         print_tool_ussage_and_exit()
 
-    max_arg_count = 8 # all 5 arguments and the 3 values
     if argument_list.__len__() == 0 or argument_list.__len__() > len(long_options) * 2:
         print_tool_ussage_and_exit()
 
     # Validate argument
     for current_argument, current_value in arguments:
         if current_argument in ("-c", "--configFile"):
-            config_file_path = current_value
+            globals.CONFIG_FILE_PATH = current_value
         if current_argument in ("-f", "--hdf5File"):
             globals.HDF5_FILE = current_value
         if current_argument in ("-l", "--logFilePath"):
@@ -66,15 +66,52 @@ def main():
             globals.ONLY_PRINT = True
         if current_argument in ("-s", "--saveInjectionSequence"):
             globals.SAVE_INJECTION_SEQUENCE = True
+        if current_argument in ("-i", "--injectionSequencePath"):
+            globals.INJECTION_SEQUENCE_PATH = current_value
         elif current_argument in ("-h", "--help"):
             print_tool_ussage_and_exit()
 
-    config_file_reader.read_config_file(config_file_path)
+    if globals.SAVE_INJECTION_SEQUENCE and globals.INJECTION_SEQUENCE_PATH != "":
+        print("-s (--saveInjectionSequence) and -i (--injectionSequencePath) are incompatible options")
+        print_tool_ussage_and_exit()
 
-    # path = os.path.dirname(config_file_path)
-    # if path == "":
-    #    path = "."
-    config_file_name = os.path.basename(config_file_path).rsplit('.', 1)[0]
+
+def determine_locations_to_corrupt():
+    globals.ALL_LOCATIONS = hdf5_common.get_hdf5_file_leaf_locations(globals.HDF5_FILE)
+
+    if globals.INJECTION_SEQUENCE_PATH != "":
+        if path.exists(globals.INJECTION_SEQUENCE_PATH):
+            json_content = open(globals.INJECTION_SEQUENCE_PATH, 'r').read()
+            globals.INJECTION_SEQUENCE = json.loads(json_content)
+            globals.BASE_LOCATIONS = globals.INJECTION_SEQUENCE.keys()
+            globals.LOCATIONS_TO_CORRUPT = hdf5_common.get_full_location_paths(globals.BASE_LOCATIONS,
+                                                                               globals.ALL_LOCATIONS)
+        else:
+            hdf5_common.handle_error("File does not exists: " + globals.INJECTION_SEQUENCE_PATH)
+    else:
+        if globals.USE_RANDOM_LOCATIONS:
+            logging.info("Will inject errors at random locations")
+            globals.LOCATIONS_TO_CORRUPT = globals.BASE_LOCATIONS = globals.ALL_LOCATIONS
+        else:
+            globals.BASE_LOCATIONS = globals.LOCATIONS_TO_CORRUPT
+            globals.LOCATIONS_TO_CORRUPT = hdf5_common.get_full_location_paths(globals.LOCATIONS_TO_CORRUPT,
+                                                                               globals.ALL_LOCATIONS)
+
+
+def save_injection_sequence(json_file_name: str):
+    if globals.SAVE_INJECTION_SEQUENCE:
+        # serializing injection sequence to json
+        injection_sequence_content = json.dumps(globals.INJECTION_SEQUENCE, indent=2)
+        with open(json_file_name, "w") as injection_sequence_file:
+            injection_sequence_file.write(injection_sequence_content)
+
+
+# params: -c "config-chainer.yaml" -t "percentage" -k 0.005 -o
+def main():
+    read_arguments(sys.argv[1:])
+    config_file_reader.read_config_file(globals.CONFIG_FILE_PATH)
+
+    config_file_name = os.path.basename(globals.CONFIG_FILE_PATH).rsplit('.', 1)[0]
     now = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     log_file_name = globals.LOG_FILE_PATH + config_file_name + "_" + now + "_corruption.log"
     logging.basicConfig(filename=log_file_name, filemode='w', format='%(levelname)s - %(message)s',
@@ -83,43 +120,38 @@ def main():
     config_file_reader.check_for_error_in_values()
     config_file_reader.log_options()
 
-    # if first bit (sign-bit) not in range and ALLOW_SIGN_CHANGE is true, then increase by 1 the start of range
-    if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT > 0:
-        globals.FIRST_BIT -= 1
-
     if globals.ONLY_PRINT:
         hdf5_common.print_hdf5_file(globals.HDF5_FILE)
     else:
-        globals.ALL_LOCATIONS = hdf5_common.get_hdf5_file_leaf_locations(globals.HDF5_FILE)
+        determine_locations_to_corrupt()
 
-        if globals.USE_RANDOM_LOCATIONS:
-            logging.info("Will inject errors at random locations")
-            globals.LOCATIONS_TO_CORRUPT = globals.ALL_LOCATIONS
+        if globals.INJECTION_SEQUENCE_PATH != "":
+            corrupter.corrupt_hdf5_file_based_on_sequence(globals.HDF5_FILE, globals.INJECTION_SEQUENCE,
+                                                          globals.LOCATIONS_TO_CORRUPT)
+
+        # normal injection
         else:
-            globals.LOCATIONS_TO_CORRUPT = hdf5_common.get_full_location_paths(globals.LOCATIONS_TO_CORRUPT,
-                                                                               globals.ALL_LOCATIONS)
+            # if first bit (sign-bit) not in range and ALLOW_SIGN_CHANGE is true, then increase by 1 the start of range
+            if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT > 0:
+                globals.FIRST_BIT -= 1
 
-        file_entries_count = hdf5_common.count_hdf5_file_entries(globals.HDF5_FILE)
-        # calculates the number of injection tries, based on the desired corruption percentage
-        if globals.INJECTION_TYPE == globals.PERCENTAGE_STR:
-            num_injection_tries = int(globals.INJECTION_TRIES * file_entries_count / 100)
-        # Corruption type = "Count"
-        else:
-            num_injection_tries = globals.INJECTION_TRIES
+            file_entries_count = hdf5_common.count_hdf5_file_entries(globals.HDF5_FILE)
+            # calculates the number of injection attempts, based on the desired corruption percentage
+            if globals.INJECTION_TYPE == globals.PERCENTAGE_STR:
+                num_injection_tries = int(globals.INJECTION_TRIES * file_entries_count / 100)
+            # Corruption type = "Count"
+            else:
+                num_injection_tries = globals.INJECTION_TRIES
 
-        logging.info("Will inject at most: " + str(num_injection_tries) + " errors")
-        logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BIT) + "-" + str(globals.LAST_BIT) + "]")
+            logging.info("Will inject at most: " + str(num_injection_tries) + " errors")
+            logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BIT) + "-" + str(globals.LAST_BIT) + "]")
 
-        errors_injected = corrupter.corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
-                                                      globals.INJECTION_PROBABILITY, num_injection_tries, False)
+            errors_injected = corrupter.corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
+                                                          globals.INJECTION_PROBABILITY, num_injection_tries)
 
-        # serializing injection sequence to json
-        #injection_sequence_content = json.dumps(globals.INJECTION_SEQUENCE, indent=4)
-        #injection_sequence_file_name = globals.LOG_FILE_PATH + "_" + now + "_injectionSequence.json"
-        #with open(injection_sequence_file_name, "w") as injection_sequence_file:
-        #    injection_sequence_file.write(injection_sequence_content)
-        logging.info("File corrupted: " + str(errors_injected * 100 / file_entries_count) +
-                     " %, with a total of: " + str(errors_injected) + " errors injected")
+            logging.info("File corrupted: " + str(errors_injected * 100 / file_entries_count) +
+                         " %, with a total of: " + str(errors_injected) + " errors injected")
+            save_injection_sequence(globals.LOG_FILE_PATH + "injectionSequence_" + now + ".json")
 
 
 if __name__ == "__main__":

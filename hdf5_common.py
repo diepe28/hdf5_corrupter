@@ -11,6 +11,13 @@ from datetime import datetime
 os.environ["OMP_NUM_THREADS"] = "1"
 
 
+def handle_error(error_message):
+    error_message = "CRITICAL: " + error_message
+    print(error_message)
+    logging.error(error_message)
+    sys.exit(2)
+
+
 # each item is a tuple: {name, group}
 def print_hdf5_item(item: tuple, prefix: str):
     item_name = item[0]
@@ -137,3 +144,22 @@ def get_full_location_paths(locations_to_corrupt: [], all_location_paths: []):
             sys.exit(2)
 
     return full_location_paths
+
+
+# given a path it returns all full locations within that path
+def get_full_location_paths_for(given_path: str, all_paths: []):
+    full_paths = []
+    for full_path in all_paths:
+        if full_path.startswith(given_path):
+            full_paths.append(full_path)
+
+    return full_paths
+
+
+# returns the base location of a given location
+def get_base_locations_for(current_location: str, base_locations: []):
+    for base_location in base_locations:
+        if current_location.startswith(base_location):
+            return base_location
+
+    return ""
