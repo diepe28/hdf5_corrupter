@@ -21,6 +21,10 @@ def print_tool_usage_and_exit():
           "\t\t\t*Overwrites value from config file*")
     print("  -l | --logFilePath \"path/to/logs/\", path where to save the log files."
           "\t\t*Overwrites value from config file*")
+    print("  -d | --firstBit <value>, first bit to inject errors (0-63), leftmost is sign-bit, next 11 are exp bits "
+          "and the rest is mantissa. it must be <= than last_bit..\t\t\t*Overwrites value from config file*")
+    print("  -e | --lastBit <value>, last bit to inject errors (0-63), it must be >= than first_byte. If both values"
+          " are the same, injection will only happen on that bit...\t\t\t*Overwrites value from config file*")
     print("  -p | --injectionProbability <value>, value of injection probability."
           "\t\t\t*Overwrites value from config file*")
     print("  -t | --injectionType <type>, where type can be either \"percentage\" or \"count\"."
@@ -39,9 +43,10 @@ def print_tool_usage_and_exit():
 
 
 def read_arguments(argument_list):
-    short_options = "hc:f:l:p:t:k:a:si:o"
-    long_options = ["help", "configFile=", "hdf5File=", "logFilePath=", "injectionProbability=", "injectionType=",
-                    "injectionTries=", "scalingFactor=", "saveInjectionSequence", "injectionSequencePath=", "onlyPrint"]
+    short_options = "hc:f:l:d:e:p:t:k:a:si:o"
+    long_options = ["help", "configFile=", "hdf5File=", "logFilePath=", "firstBit=", "lastBit=",
+                    "injectionProbability=", "injectionType=", "injectionTries=", "scalingFactor=",
+                    "saveInjectionSequence", "injectionSequencePath=", "onlyPrint"]
     try:
         arguments, values = getopt.getopt(argument_list, short_options, long_options)
     except getopt.error as err:
@@ -58,6 +63,10 @@ def read_arguments(argument_list):
             globals.HDF5_FILE = current_value
         if current_argument in ("-l", "--logFilePath"):
             globals.LOG_FILE_PATH = current_value
+        if current_argument in ("-d", "--firstBit"):
+            globals.FIRST_BIT = int(current_value)
+        if current_argument in ("-e", "--lastBit"):
+            globals.LAST_BIT = int(current_value)
         if current_argument in ("-p", "--injectionProbability"):
             globals.INJECTION_PROBABILITY = float(current_value)
         if current_argument in ("-t", "--injectionType"):

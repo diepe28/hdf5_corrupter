@@ -61,9 +61,13 @@ def read_config_file(config_file_path: str):
         if globals.SCALING_FACTOR_STR in data and globals.SCALING_FACTOR is None:
             globals.SCALING_FACTOR = float(data[globals.SCALING_FACTOR_STR])
 
+        if globals.FIRST_BIT_STR in data and globals.FIRST_BIT is None:
+            globals.FIRST_BIT = int(data[globals.FIRST_BIT_STR])
+
+        if globals.LAST_BIT_STR in data and globals.LAST_BIT is None:
+            globals.LAST_BIT = int(data[globals.LAST_BIT_STR])
+
         # values only available through config file
-        globals.FIRST_BIT = int(data[globals.FIRST_BIT_STR])
-        globals.LAST_BIT = int(data[globals.LAST_BIT_STR])
         globals.ALLOW_SIGN_CHANGE = bool(data[globals.ALLOW_SIGN_CHANGE_STR])
         globals.ALLOW_NaN_VALUES = bool(data[globals.ALLOW_NaN_VALUES_STR])
         globals.USE_RANDOM_LOCATIONS = bool(data[globals.USE_RANDOM_LOCATIONS_STR])
