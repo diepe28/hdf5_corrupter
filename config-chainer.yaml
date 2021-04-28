@@ -13,6 +13,8 @@
 #    last_bit                     last bit to inject errors (0-63), it must be >= than first_byte.
 #                                 If both values are the same, injection will only happen on that bit.
 #
+#    scaling_factor               if used, the above bit range is ignored and values will be scaled by this factor
+#
 #    allow_sign_change            True,   when corruption is on float value, even if the sign-bit (0) is not included
 #                                         in the above range, it will also enable bit flips on it.
 #                                 False,  it respects the above range.
@@ -37,6 +39,7 @@ injection_tries: 5
 log_file_path: "/home/diego/PycharmProjects/hdf5_corrupter/"
 first_bit: 0
 last_bit: 63
+#scaling_factor: 1
 allow_sign_change: True
 allow_NaN_values: True
 #injection_sequence_path: "/home/diego/PycharmProjects/hdf5_corrupter/injectionSequence.json"

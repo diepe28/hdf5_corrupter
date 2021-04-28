@@ -12,41 +12,43 @@ from datetime import datetime
 os.environ["OMP_NUM_THREADS"] = "1"
 
 
-def print_tool_ussage_and_exit():
+def print_tool_usage_and_exit():
     print("Correct usage of the tool: ")
     print("> hdf<5_corrupter.py <arguments>, where the possible arguments are:")
-    print("   -h | --help, optional argument, prints this message")
-    print("   -c | --configFile \"path/to/config.yaml\", mandatory argument, the tool always needs a config.yaml")
-    print("   -f | --hdf5File \"path/to/file.h5\", path to the hdf5 file to corrupt."
+    print("  -h | --help, optional argument, prints this message")
+    print("  -c | --configFile \"path/to/config.yaml\", mandatory argument, the tool always needs a config.yaml")
+    print("  -f | --hdf5File \"path/to/file.h5\", path to the hdf5 file to corrupt."
           "\t\t\t*Overwrites value from config file*")
-    print("   -l | --logFilePath \"path/to/logs/\", path where to save the log files."
+    print("  -l | --logFilePath \"path/to/logs/\", path where to save the log files."
           "\t\t*Overwrites value from config file*")
-    print("   -p | --injectionProbability <value>, value of injection probability."
+    print("  -p | --injectionProbability <value>, value of injection probability."
           "\t\t\t*Overwrites value from config file*")
-    print("   -t | --injectionType <type>, where type can be either \"percentage\" or \"count\"."
+    print("  -t | --injectionType <type>, where type can be either \"percentage\" or \"count\"."
           "\t*Overwrites value from config file*")
-    print("   -k | --injectionTries <value>, value in [0-1] or int > 0, depending on injection_type, respectively."
+    print("  -k | --injectionTries <value>, value in [0-1] or int > 0, depending on injection_type, respectively."
           "\t*Overwrites value from config file*")
-    print("   -o | --onlyPrint, optional argument, prints the contents of the hdf5 file specified and exits")
-    print("   -s | --saveInjectionSequence, optional, incompatible with -i, saves the injection sequence to a file")
-    print("   -i | --injectionSequencePath, optional, incompatible with -s, uses the injection sequence from the file "
-          "for the injection. If this argument is used, the following settings will be ignored: 'use_random_locations',"
-          "'locations_to_corrupt', 'injectionProbability', 'injectionType', 'injectionTries'")
+    print("  -a | --scalingFactor <value>, optional, if used it ignores the bit range and multiplies every value"
+          "by this scaling factor")
+    print("  -s | --saveInjectionSequence, optional, incompatible with -i, saves the injection sequence to a file")
+    print("  -i | --injectionSequencePath \"path/to/sequence.json\", optional, incompatible with -s, uses the injection"
+          "injection sequence from the file for the injection. If used, the following settings will be ignored: "
+          "'use_random_locations','locations_to_corrupt','injectionProbability','injectionType','injectionTries'")
+    print("  -o | --onlyPrint, optional, prints the contents of the hdf5 file specified and exits")
     logging.critical("Wrong use of the tool... exiting")
     sys.exit(2)
 
 
 def read_arguments(argument_list):
-    short_options = "hc:f:l:t:k:p:i:os"
-    long_options = ["help", "configFile=", "hdf5File=", "logFilePath=", "injectionType=", "injectionTries=",
-                    "injectionProbability=", "injectionSequencePath=", "onlyPrint", "saveInjectionSequence"]
+    short_options = "hc:f:l:p:t:k:a:si:o"
+    long_options = ["help", "configFile=", "hdf5File=", "logFilePath=", "injectionProbability=", "injectionType=",
+                    "injectionTries=", "scalingFactor=", "saveInjectionSequence", "injectionSequencePath=", "onlyPrint"]
     try:
         arguments, values = getopt.getopt(argument_list, short_options, long_options)
     except getopt.error as err:
-        print_tool_ussage_and_exit()
+        print_tool_usage_and_exit()
 
     if argument_list.__len__() == 0 or argument_list.__len__() > len(long_options) * 2:
-        print_tool_ussage_and_exit()
+        print_tool_usage_and_exit()
 
     # Validate argument
     for current_argument, current_value in arguments:
@@ -56,24 +58,26 @@ def read_arguments(argument_list):
             globals.HDF5_FILE = current_value
         if current_argument in ("-l", "--logFilePath"):
             globals.LOG_FILE_PATH = current_value
+        if current_argument in ("-p", "--injectionProbability"):
+            globals.INJECTION_PROBABILITY = float(current_value)
         if current_argument in ("-t", "--injectionType"):
             globals.INJECTION_TYPE = current_value
         if current_argument in ("-k", "--injectionTries"):
             globals.INJECTION_TRIES = float(current_value)
-        if current_argument in ("-p", "--injectionProbability"):
-            globals.INJECTION_PROBABILITY = float(current_value)
-        if current_argument in ("-o", "--onlyPrint"):
-            globals.ONLY_PRINT = True
+        if current_argument in ("-a", "--scalingFactor"):
+            globals.SCALING_FACTOR = float(current_value)
         if current_argument in ("-s", "--saveInjectionSequence"):
             globals.SAVE_INJECTION_SEQUENCE = True
         if current_argument in ("-i", "--injectionSequencePath"):
             globals.INJECTION_SEQUENCE_PATH = current_value
+        if current_argument in ("-o", "--onlyPrint"):
+            globals.ONLY_PRINT = True
         elif current_argument in ("-h", "--help"):
-            print_tool_ussage_and_exit()
+            print_tool_usage_and_exit()
 
     if globals.SAVE_INJECTION_SEQUENCE and globals.INJECTION_SEQUENCE_PATH != "":
         print("-s (--saveInjectionSequence) and -i (--injectionSequencePath) are incompatible options")
-        print_tool_ussage_and_exit()
+        print_tool_usage_and_exit()
 
 
 def determine_locations_to_corrupt():

@@ -12,6 +12,14 @@ from datetime import datetime
 import hdf5_common
 
 
+def log_delta(val_type: str, before_val, after_val, changed_bit, scaling_factor = None):
+    corruption_type = "by a scale factor: " + str(scaling_factor) if scaling_factor is not None else\
+        "at bit: " + str(changed_bit)
+
+    logging.debug(val_type + " location value was corrupted " + corruption_type +
+                  "  Delta> " + str(before_val) + " --> " + str(after_val))
+
+
 def bin_to_float(b):
     bf = int_to_bytes(int(b, 2), 8)  # 8 bytes needed for IEEE 754 binary64.
     return struct.unpack('>d', bf)[0]
@@ -37,8 +45,7 @@ def corrupt_int(val: int):
     chosen_bit = randint(0, len(binary) - 1)
     new_binary = change_bit_in_binary(binary, chosen_bit)
     new_val = int(new_binary, 2)
-    logging.debug("Int location value was corrupted at bit: " + str(chosen_bit) +
-                  "  Delta> " + str(val) + " --> " + str(new_val))
+    log_delta("Int", val, new_val, chosen_bit)
     return new_val, chosen_bit
 
 
@@ -50,8 +57,7 @@ def corrupt_float(val: float, chosen_bit: int):
         logging.debug("Could not corrupt value at the index because it was a NaN or Inf... trying again")
         return try_corrupt_value(val, 1)
 
-    logging.debug("Float location value was corrupted at bit: " + str(chosen_bit) +
-                  "  Delta> " + str(val) + " --> " + str(new_val))
+    log_delta("Float", val, new_val, chosen_bit)
     return new_val, chosen_bit
 
 
@@ -60,17 +66,21 @@ def try_corrupt_value(val, corruption_prob: float):
     random.seed(datetime.now())
     if random.random() < corruption_prob:
         str_val_type = str(type(val))
+        if globals.SCALING_FACTOR is None:
+            if "int" in str_val_type:
+                new_val, chosen_bit = corrupt_int(val)
+            else:
+                chosen_bit = randint(globals.FIRST_BIT, globals.LAST_BIT)
+                # if chosen bit is new first_bit (first_bit should have been decreased by 1 when reading args)
+                # then chosen bit should actually be the sign-bit (0)
+                if globals.ALLOW_SIGN_CHANGE and chosen_bit == globals.FIRST_BIT:
+                    chosen_bit = 0
 
-        if "int" in str_val_type:
-            new_val, chosen_bit = corrupt_int(val)
+                new_val, chosen_bit = corrupt_float(val, chosen_bit)
         else:
-            chosen_bit = randint(globals.FIRST_BIT, globals.LAST_BIT)
-            # if chosen bit is new first_bit (first_bit should have been decreased by 1 when reading args)
-            # then chosen bit should actually be the sign-bit (0)
-            if globals.ALLOW_SIGN_CHANGE and chosen_bit == globals.FIRST_BIT:
-                chosen_bit = 0
-
-            new_val, chosen_bit = corrupt_float(val, chosen_bit)
+            new_val = val * globals.SCALING_FACTOR
+            chosen_bit = -1
+            log_delta("", val, new_val, -1, globals.SCALING_FACTOR)
 
         return new_val, chosen_bit
 

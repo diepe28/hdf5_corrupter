@@ -18,6 +18,8 @@ def log_options():
     logging.info(" " + globals.LAST_BIT_STR + ": " + str(globals.LAST_BIT))
     logging.info(" " + globals.ALLOW_SIGN_CHANGE_STR + ": " + str(globals.ALLOW_SIGN_CHANGE))
     logging.info(" " + globals.ALLOW_NaN_VALUES_STR + ": " + str(globals.ALLOW_NaN_VALUES))
+    if globals.SCALING_FACTOR is not None:
+        logging.info(" Ignoring bit range, using: " + globals.SCALING_FACTOR_STR + ": " + str(globals.SCALING_FACTOR))
     if globals.SAVE_INJECTION_SEQUENCE:
         logging.info(" " + globals.SAVE_INJECTION_SEQUENCE_STR + ": TRUE")
     if globals.INJECTION_SEQUENCE_PATH != "":
@@ -55,6 +57,9 @@ def read_config_file(config_file_path: str):
 
         if globals.INJECTION_SEQUENCE_PATH_STR in data and globals.INJECTION_SEQUENCE_PATH == "":
             globals.INJECTION_SEQUENCE_PATH = data[globals.INJECTION_SEQUENCE_PATH_STR]
+
+        if globals.SCALING_FACTOR_STR in data and globals.SCALING_FACTOR is None:
+            globals.SCALING_FACTOR = float(data[globals.SCALING_FACTOR_STR])
 
         # values only available through config file
         globals.FIRST_BIT = int(data[globals.FIRST_BIT_STR])

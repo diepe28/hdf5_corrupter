@@ -50,3 +50,6 @@ SAVE_INJECTION_SEQUENCE_STR = "save_injection_sequence"
 INJECTION_SEQUENCE_PATH = ""
 INJECTION_SEQUENCE_PATH_STR = "injection_sequence_path"
 INJECTION_SEQUENCE = {}
+
+SCALING_FACTOR = None
+SCALING_FACTOR_STR = "scaling_factor"
