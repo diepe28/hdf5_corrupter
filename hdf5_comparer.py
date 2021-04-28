@@ -3,6 +3,7 @@ import numpy as np
 import sys, getopt
 import os
 from dataclasses import dataclass
+import numpy.linalg
 import hdf5_common
 import logging
 
@@ -23,33 +24,38 @@ def print_tool_ussage_and_exit():
 class Diff:
     entries_count: float
     diff_count: float
+    euclidean_distance: float
 
 
 def diff_print(dd: Diff, prefix: str):
     if dd.diff_count > 0 and dd.entries_count > 0:
         diff_percentage = str(dd.diff_count * 100 / dd.entries_count)
-        print(prefix + str(dd.diff_count) + " diffs. Representing " + diff_percentage + "% of difference")
+        distance = "" if dd.euclidean_distance == -1 else " Euclidean distance: " + str(dd.euclidean_distance)
+        txt = "{prefix_str} {diff_count_str} diffs. Representing {percentage_str}%. {distance_str}".format(
+            prefix_str=prefix, diff_count_str=dd.diff_count, percentage_str=diff_percentage, distance_str=distance)
+        print(txt)
 
 
 def compare_datasets(before_dataset, after_dataset):
     if before_dataset.ndim != after_dataset.ndim:
-        return Diff(0, 0)
+        return Diff(0, 0, -1)
 
     if after_dataset.ndim == 0:
         diff_count = 1 if before_dataset[()] != after_dataset[()] else 0
         entries_count = 1
+        euclidean_dist = -1
     else:
         before_narray = np.array(before_dataset)
         after_narray = np.array(after_dataset)
 
+        # calculates the number of entries in the array that are different
         diffs = [x for (x, y) in zip(before_narray.flatten(), after_narray.flatten()) if x != y]
         diff_count = diffs.__len__()
 
-        #diffs = np.isclose(before_narray.flatten(), after_narray.flatten(), rtol=1e-10, equal_nan=False)
-        #diff_count = (diffs == False).sum()
+        euclidean_dist = numpy.linalg.norm(before_narray - after_narray)
         entries_count = np.prod(before_dataset.shape)
 
-    return Diff(entries_count, diff_count)
+    return Diff(entries_count, diff_count, euclidean_dist)
 
 
 def compare_files(before_file: str, after_file: str):
@@ -64,7 +70,7 @@ def compare_files(before_file: str, after_file: str):
             print("After file has less locations than after file, using After file locations for comparison.")
             locations_to_use = after_locations
 
-        file_diff = Diff(0, 0)
+        file_diff = Diff(0, 0, -1)
         with h5py.File(before_file, 'r') as before_hdf5:
             with h5py.File(after_file, 'r') as after_hdf5:
                 for location in locations_to_use:
