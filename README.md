@@ -31,7 +31,7 @@ The .yaml configuration file must have the following entries:
 - *scaling_factor*, used, the above bit range is ignored and values will be scaled by this factor
 - *allow_sign_change*, True,   when corruption is on float value, even if the sign-bit (0) is not included, in the above range, it will also enable bit flips on it. False,  it respects the above range.
 - *allow_NaN_values*, when flipping a bit of the in a double, the resulting binary can represent a NaN or Inf. If set to False, the corruption mechanism will never produce such values
-- *save_injection_sequence*, If True, it saves to json all the bits that were changed for each location specified.
+- *save_injection_sequence*, If present, it saves to json all the bits that were changed for each location specified.
 - *injection_sequence_path*, If used, loads the injection sequence from a json and uses those bits to corrupt the locations specified at the sequence.
 - *use_random_locations*, choose random locations on the file to inject errors, if true it will ignore the locations_to_corrupt
 - *locations_to_corrupt*, list of locations to try to inject errors
