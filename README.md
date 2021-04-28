@@ -9,6 +9,8 @@ Where the possible arguments are:
  - -c | --configFile "path/to/config.yaml", mandatory argument (unless used with -h)
  - -f | --hdf5File "path/to/file.h5", path to the hdf5 file to corrupt. *Overwrites value from config file*
  - -l | --logFilePath "path/to/logs/", path where to save the log files. *Overwrites value from config file*
+ - -d | --firstBit <value>, first bit to inject errors (0-63), leftmost is sign-bit, next 11 are exp bits and the rest is mantissa. it must be <= than last_bit. *Overwrites value from config file*
+ - -e | --lastBit <value>, last bit to inject errors (0-63), it must be >= than first_byte. If both values are the same, injection will only happen on that bit. *Overwrites value from config file*
  - -p | --injectionProbability value, value of injection probability. *Overwrites value from config file*
  - -t | --injectionType type, where type can be either \"percentage\" or \"count\"". *Overwrites value from config file*
  - -k | --injectionTries value, is either a real number between [0-1] or a int > 0, depending if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1. *Overwrites value from config file*
