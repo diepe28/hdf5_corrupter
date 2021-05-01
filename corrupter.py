@@ -79,7 +79,7 @@ def try_corrupt_value(val, corruption_prob: float):
                 new_val, chosen_bit = corrupt_float(val, chosen_bit)
         else:
             new_val = val * globals.SCALING_FACTOR
-            chosen_bit = -1
+            chosen_bit = -2  # -2, so it counts the injection
             log_delta("", val, new_val, -1, globals.SCALING_FACTOR)
 
         return new_val, chosen_bit
@@ -113,12 +113,13 @@ def __get_random_indexes(dataset):
     return indexes
 
 
-def corrupt_dataset(dataset, corruption_prob: float):
+# Tries to corrupt the given dataset with the given probability
+def try_corrupt_dataset(dataset, corruption_prob: float):
     corrupted_bit = -1
     r_pos = __get_random_indexes(dataset)
     logging.debug("Indexes to corrupt: " + str(r_pos))
     if dataset.ndim == 0:
-        dataset[()], corrupted_bit = corrupt_value_at_bit(dataset[()], corruption_prob)
+        dataset[()], corrupted_bit = try_corrupt_value(dataset[()], corruption_prob)
     elif dataset.ndim == 1:
         dataset[r_pos[0]], corrupted_bit = try_corrupt_value(dataset[r_pos[0]], corruption_prob)
     elif dataset.ndim == 2:
@@ -135,7 +136,7 @@ def corrupt_dataset(dataset, corruption_prob: float):
     return corrupted_bit
 
 
-# corrupts a random value in a dataset at the chosen bit
+# Corrupts a random value in a dataset at the chosen bit
 def corrupt_dataset_using_bit(dataset, chosen_bit: int):
     r_pos = __get_random_indexes(dataset)
     logging.debug("Indexes to corrupt: " + str(r_pos))
@@ -155,8 +156,9 @@ def corrupt_dataset_using_bit(dataset, chosen_bit: int):
     # more than 4 is very unlikely... right?
 
 
-def corrupt_hdf5_file(input_file: str, locations_to_corrupt, corruption_prob: float,
-                      num_injection_attempts: int):
+# Tries to corrupt the input file at the given locations, with the given probability, num_injection_attempts times
+def try_corrupt_hdf5_file(input_file: str, locations_to_corrupt, corruption_prob: float,
+                          num_injection_attempts: int):
     if path.exists(input_file):
         errors_injected = 0
         logging.info("----------- Corrupting file, main loop -----------")
@@ -172,7 +174,7 @@ def corrupt_hdf5_file(input_file: str, locations_to_corrupt, corruption_prob: fl
 
                 dataset = hdf.get(location)
                 if dataset is not None:
-                    corrupted_bit = corrupt_dataset(dataset, corruption_prob)
+                    corrupted_bit = try_corrupt_dataset(dataset, corruption_prob)
                     if corrupted_bit != -1:
                         errors_injected += 1
                     if globals.SAVE_INJECTION_SEQUENCE:
