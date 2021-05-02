@@ -16,14 +16,20 @@ def log_options():
     logging.info(" " + globals.INJECTION_TRIES_STR + ": " + str(globals.INJECTION_TRIES))
     logging.info(" " + globals.FIRST_BIT_STR + ": " + str(globals.FIRST_BIT))
     logging.info(" " + globals.LAST_BIT_STR + ": " + str(globals.LAST_BIT))
+    if globals.BURST is not None:
+        logging.info(" Injection burst (num of changed bits per value): " + str(globals.BURST))
     logging.info(" " + globals.ALLOW_SIGN_CHANGE_STR + ": " + str(globals.ALLOW_SIGN_CHANGE))
     logging.info(" " + globals.ALLOW_NaN_VALUES_STR + ": " + str(globals.ALLOW_NaN_VALUES))
+
     if globals.SCALING_FACTOR is not None:
-        logging.info(" Ignoring bit range, using: " + globals.SCALING_FACTOR_STR + ": " + str(globals.SCALING_FACTOR))
+        logging.info(" [WARNING] Ignoring bit range and burst value, using scaling factor: " +
+                     str(globals.SCALING_FACTOR))
+
     if globals.SAVE_INJECTION_SEQUENCE:
         logging.info(" " + globals.SAVE_INJECTION_SEQUENCE_STR + ": TRUE")
     if globals.INJECTION_SEQUENCE_PATH != "":
-        logging.info(" Using injection sequence from file: " + str(globals.INJECTION_SEQUENCE_PATH))
+        logging.info(" [WARNING] Ignoring corruption settings. Using injection sequence from file: " +
+                     str(globals.INJECTION_SEQUENCE_PATH))
     logging.info(" " + globals.USE_RANDOM_LOCATIONS_STR + ": " + str(globals.USE_RANDOM_LOCATIONS))
     logging.info(" " + globals.LOCATIONS_TO_CORRUPT_STR + ":")
     for location in globals.LOCATIONS_TO_CORRUPT:
@@ -61,6 +67,12 @@ def read_config_file(config_file_path: str):
         if globals.SCALING_FACTOR_STR in data and globals.SCALING_FACTOR is None:
             globals.SCALING_FACTOR = float(data[globals.SCALING_FACTOR_STR])
 
+        if globals.BURST is None:
+            if globals.BURST_STR in data:
+                globals.BURST = int(data[globals.BURST_STR])
+            else:
+                globals.BURST = 1  # default value: 1 injection attempt per value
+
         if globals.FIRST_BIT_STR in data and globals.FIRST_BIT is None:
             globals.FIRST_BIT = int(data[globals.FIRST_BIT_STR])
 
@@ -96,8 +108,13 @@ def check_for_error_in_values():
         logging.info("Truncating  " + str(globals.INJECTION_TRIES) + " to " + str(int_value))
         globals.INJECTION_TRIES = int_value
 
-        if globals.INJECTION_TRIES < 1:
-            hdf5_common.handle_error("Injection tries for corruption type \"count\" must be a positive integer")
+    if globals.INJECTION_TRIES < 1:
+        hdf5_common.handle_error("Injection tries for corruption type \"count\" must be a positive integer")
 
-    if globals.SAVE_INJECTION_SEQUENCE and globals.INJECTION_SEQUENCE_PATH != "":
-        hdf5_common.handle_error("'saveInjectionSequence' and 'injectionSequencePath' are incompatible options")
+    if globals.BURST < 1:
+        hdf5_common.handle_error("Injection burst must be a positive integer")
+
+    if globals.SAVE_INJECTION_SEQUENCE and \
+            (globals.INJECTION_SEQUENCE_PATH != "" or globals.SCALING_FACTOR is not None):
+        hdf5_common.handle_error("'saveInjectionSequence' is not compatible with "
+                                 "'injectionSequencePath' or scalingFactor")

@@ -53,3 +53,6 @@ INJECTION_SEQUENCE = {}
 
 SCALING_FACTOR = None
 SCALING_FACTOR_STR = "scaling_factor"
+
+BURST = None
+BURST_STR = "burst"

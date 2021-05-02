@@ -33,6 +33,8 @@ def print_tool_usage_and_exit():
           "\t*Overwrites value from config file*")
     print("  -a | --scalingFactor <value>, optional, if used it ignores the bit range and multiplies every value"
           "by this scaling factor")
+    print("  -b | --burst <value>, optional, default: 1, incompatible with scaling_factor, number of injection"
+          " attempts per value")
     print("  -s | --saveInjectionSequence, optional, incompatible with -i, saves the injection sequence to a file")
     print("  -i | --injectionSequencePath \"path/to/sequence.json\", optional, incompatible with -s, uses the injection"
           "injection sequence from the file for the injection. If used, the following settings will be ignored: "
@@ -43,10 +45,10 @@ def print_tool_usage_and_exit():
 
 
 def read_arguments(argument_list):
-    short_options = "hc:f:l:d:e:p:t:k:a:si:o"
+    short_options = "hc:f:l:d:e:p:t:k:a:b:si:o"
     long_options = ["help", "configFile=", "hdf5File=", "logFilePath=", "firstBit=", "lastBit=",
                     "injectionProbability=", "injectionType=", "injectionTries=", "scalingFactor=",
-                    "saveInjectionSequence", "injectionSequencePath=", "onlyPrint"]
+                    "burst=", "saveInjectionSequence", "injectionSequencePath=", "onlyPrint"]
     try:
         arguments, values = getopt.getopt(argument_list, short_options, long_options)
     except getopt.error as err:
@@ -75,6 +77,8 @@ def read_arguments(argument_list):
             globals.INJECTION_TRIES = float(current_value)
         if current_argument in ("-a", "--scalingFactor"):
             globals.SCALING_FACTOR = float(current_value)
+        if current_argument in ("-b", "--burst"):
+            globals.BURST = int(current_value)
         if current_argument in ("-s", "--saveInjectionSequence"):
             globals.SAVE_INJECTION_SEQUENCE = True
         if current_argument in ("-i", "--injectionSequencePath"):
@@ -119,7 +123,6 @@ def save_injection_sequence(json_file_name: str):
             injection_sequence_file.write(injection_sequence_content)
 
 
-# params: -c "config-chainer.yaml" -t "percentage" -k 0.005 -o
 def main():
     read_arguments(sys.argv[1:])
     config_file_reader.read_config_file(globals.CONFIG_FILE_PATH)
@@ -160,7 +163,8 @@ def main():
             logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BIT) + "-" + str(globals.LAST_BIT) + "]")
 
             errors_injected = corrupter.try_corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
-                                                              globals.INJECTION_PROBABILITY, num_injection_tries)
+                                                              globals.INJECTION_PROBABILITY, num_injection_tries,
+                                                              globals.BURST)
 
             logging.info("File corrupted: " + str(errors_injected * 100 / file_entries_count) +
                          " %, with a total of: " + str(errors_injected) + " errors injected")
