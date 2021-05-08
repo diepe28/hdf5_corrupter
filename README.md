@@ -12,10 +12,11 @@ Where the possible arguments are:
  - -d | --firstBit <value>, first bit to inject errors (0-63), leftmost is sign-bit, next 11 are exp bits, and the rest is mantissa. it must be <= than last_bit. *Overwrites value from config file*
  - -e | --lastBit <value>, last bit to inject errors (0-63), it must be >= than first_byte. If both values are the same, injection will only happen on that bit. *Overwrites value from config file*
  - -b | --burst <value>, optional, default: 1, incompatible with scaling_factor, number of injection attempts per value *Overwrites value from config file*
+ - -a | --scalingFactor value, optional, if used it ignores the bit range and multiplies every value by this scaling factor 
+ - -m | --bitMask value, optional, incompatible with scaling_factor or burst, uses a bit mask to corrupt the values, the first bit to apply the mask in each value is randomly selected from [0 to 63-bitMaskLength]
  - -p | --injectionProbability value, value of injection probability. *Overwrites value from config file*
  - -t | --injectionType type, where type can be either \"percentage\" or \"count\"". *Overwrites value from config file*
- - -k | --injectionTries value, is either a real number between [0-1] or an int > 0, depending if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1. *Overwrites value from config file*
- - -a | --scalingFactor value, optional, if used it ignores the bit range and multiplies every value by this scaling factor
+ - -k | --injectionTries value, is either a real number between [0-1] or an int > 0, depending on if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1. *Overwrites value from config file*
  - -s | --saveInjectionSequence, optional, incompatible with -i, it saves to json all the bits that were changed for each location specified.
  - -i | --injectionSequencePath "path/to/sequence.json", optional, incompatible with -s, loads the injection sequence from a json and uses those bits to corrupt the locations specified at the sequence. If used, it will ignore the probability, the injection type, the injection tries, the locations to corrupt. It will only corrupt what is specified at the injection sequence. 
  - -o | --onlyPrint, optional argument, prints the contents of the hdf5 file specified and exits
@@ -25,14 +26,15 @@ The .yaml configuration file must have the following entries:
 
 - *injection_probability*, probability to inject an error at each value
 - *injection_type*, is one of the following strings {"percentage", "count"}
-- *injection_tries*,is either a real number between [0-1] or a int > 0, depending if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1.
+- *injection_tries*,is either a real number between [0-1] or a int > 0, depending on if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1.
 
 - *log_file_path*, path where to save the log files.
 
-- *first_bit*, first bit to inject errors (0-63), leftmost is sign-bit, next 11 are exp bits and the rest is mantissa. it must be <= than last_bit.
+- *first_bit*, first bit to inject errors (0-63), leftmost is sign-bit, next 11 bits are part of exponent, and the rest is mantissa. it must be <= than last_bit.
 - *last_bit*, last bit to inject errors (0-63), it must be >= than first_byte. If both values are the same, injection will only happen on that bit.
 - *burst*, default: 1, number of bits to corrupt per value (chosen from the above range)
-- *scaling_factor*, used, the above bit range is ignored and values will be scaled by this factor
+- *scaling_factor*, incompatible with bit range, burst, bit_mask, values will be scaled by this factor
+- *bit_mask*, incompatible with bit range, burst, scaling factor. Corrupts using a bit mask. It pads a-zeros at start and b-zeros at the end of the mask where a+b+len(mask) = 64, a and b are chosen randomly, then it makes an xor with the binary representation of the val.  
 - *allow_sign_change*, True,   when corruption is on float value, even if the sign-bit (0) is not included, in the above range, it will also enable bit flips on it. False,  it respects the above range.
 - *allow_NaN_values*, when flipping a bit of the in a double, the resulting binary can represent a NaN or Inf. If set to False, the corruption mechanism will never produce such values
 - *save_injection_sequence*, If present, it saves to json all the bits that were changed for each location specified.

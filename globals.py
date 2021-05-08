@@ -56,3 +56,8 @@ SCALING_FACTOR_STR = "scaling_factor"
 
 BURST = None
 BURST_STR = "burst"
+
+BIT_MASK = None
+BIT_MASK_STR = "bit_mask"
+
+BITS_PER_FLOAT = 64

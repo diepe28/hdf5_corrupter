@@ -25,6 +25,10 @@ def log_options():
         logging.info(" [WARNING] Ignoring bit range and burst value, using scaling factor: " +
                      str(globals.SCALING_FACTOR))
 
+    if globals.BIT_MASK is not None:
+        logging.info(" [WARNING] Ignoring bit range, burst value, using bit mask: " +
+                     str(globals.BIT_MASK))
+
     if globals.SAVE_INJECTION_SEQUENCE:
         logging.info(" " + globals.SAVE_INJECTION_SEQUENCE_STR + ": TRUE")
     if globals.INJECTION_SEQUENCE_PATH != "":
@@ -67,17 +71,21 @@ def read_config_file(config_file_path: str):
         if globals.SCALING_FACTOR_STR in data and globals.SCALING_FACTOR is None:
             globals.SCALING_FACTOR = float(data[globals.SCALING_FACTOR_STR])
 
-        if globals.BURST is None:
-            if globals.BURST_STR in data:
-                globals.BURST = int(data[globals.BURST_STR])
-            else:
-                globals.BURST = 1  # default value: 1 injection attempt per value
+        if globals.BIT_MASK_STR in data and globals.BIT_MASK is None:
+            globals.BIT_MASK = data[globals.BIT_MASK_STR]
 
         if globals.FIRST_BIT_STR in data and globals.FIRST_BIT is None:
             globals.FIRST_BIT = int(data[globals.FIRST_BIT_STR])
 
         if globals.LAST_BIT_STR in data and globals.LAST_BIT is None:
             globals.LAST_BIT = int(data[globals.LAST_BIT_STR])
+
+        if globals.BURST is None:
+            if globals.BURST_STR in data:
+                globals.BURST = int(data[globals.BURST_STR])
+            else:
+                if globals.FIRST_BIT is not None and globals.LAST_BIT:
+                    globals.BURST = 1  # default value: 1 injection attempt per value
 
         # values only available through config file
         globals.ALLOW_SIGN_CHANGE = bool(data[globals.ALLOW_SIGN_CHANGE_STR])
@@ -87,12 +95,12 @@ def read_config_file(config_file_path: str):
 
 
 def check_for_error_in_values():
-    if \
-            globals.FIRST_BIT > globals.LAST_BIT or \
-            globals.FIRST_BIT < 0 or \
-            globals.FIRST_BIT > 63 or \
-            globals.LAST_BIT < 0 or \
-            globals.LAST_BIT > 63:
+    if globals.FIRST_BIT is not None and globals.LAST_BIT is not None and\
+            (globals.FIRST_BIT > globals.LAST_BIT or
+             globals.FIRST_BIT < 0 or
+             globals.FIRST_BIT > 63 or
+             globals.LAST_BIT < 0 or
+             globals.LAST_BIT > 63):
         hdf5_common.handle_error("first_bit and last_bit must be an interval between [0-63]")
 
     if globals.INJECTION_TYPE not in globals.INJECTION_TYPE_VALUES:
@@ -111,10 +119,22 @@ def check_for_error_in_values():
     if globals.INJECTION_TRIES < 1:
         hdf5_common.handle_error("Injection tries for corruption type \"count\" must be a positive integer")
 
-    if globals.BURST < 1:
+    if globals.BURST is not None and globals.BURST < 1:
         hdf5_common.handle_error("Injection burst must be a positive integer")
 
+    incompatible_settings = 0
+    if globals.BURST is not None or globals.FIRST_BIT is not None or globals.LAST_BIT is not None:
+        incompatible_settings += 1
+    if globals.SCALING_FACTOR is not None:
+        incompatible_settings += 1
+    if globals.BIT_MASK is not None:
+        incompatible_settings += 1
+
+    if incompatible_settings > 1:
+        hdf5_common.handle_error("bit range, scaling factor, bit mask are incompatible settings")
+
     if globals.SAVE_INJECTION_SEQUENCE and \
-            (globals.INJECTION_SEQUENCE_PATH != "" or globals.SCALING_FACTOR is not None):
+            (globals.INJECTION_SEQUENCE_PATH != "" or globals.SCALING_FACTOR is not None or
+             globals.BIT_MASK is not None):
         hdf5_common.handle_error("'saveInjectionSequence' is not compatible with "
-                                 "'injectionSequencePath' or scalingFactor")
+                                 "'injection sequence path' or scaling factor or bit mask")

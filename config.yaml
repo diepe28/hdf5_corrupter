@@ -14,8 +14,10 @@
 #                                 If both values are the same, injection will only happen on that bit.
 #
 #    burst                        Default: 1, number of bits to corrupt per value (chosen from the above range)
-#    scaling_factor               if used, the above bit range and burst value are ignored and values will only
-#                                 be scaled by this factor
+#    scaling_factor               incompatible with bit range, burst, bit_mask, values will be scaled by this factor
+#    bit_mask                     incompatible with bit range, burst, scaling factor. Corrupts using a bit mask. It pads
+#                                 a-zeros at start and b-zeros at the end of the mask where a+b+len(mask) = 64, a and b
+#                                 are chosen randomly, then it makes an xor with the binary representation of the val.
 #
 #    allow_sign_change            True,   when corruption is on float value, even if the sign-bit (0) is not included
 #                                         in the above range, it will also enable bit flips on it.
@@ -39,13 +41,14 @@ injection_probability: 1 # 1e-8
 injection_type: "count" #"percentage"
 injection_tries: 3000
 log_file_path: "/home/diego/PycharmProjects/hdf5_corrupter/log-"
-first_bit: 2
-last_bit: 63
-burst: 3
+#first_bit: 2
+#last_bit: 63
+#burst: 3
 #scaling_factor: 100
+bit_mask: "10110"
 allow_sign_change: True
 allow_NaN_values: False
-injection_sequence_path: "/home/diego/PycharmProjects/hdf5_corrupter/injectionSequence.json"
+#injection_sequence_path: "/home/diego/PycharmProjects/hdf5_corrupter/injectionSequence.json"
 #save_injection_sequence: True
 use_random_locations: False
 locations_to_corrupt:

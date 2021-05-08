@@ -14,7 +14,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 
 def print_tool_usage_and_exit():
     print("Correct usage of the tool: ")
-    print("> hdf<5_corrupter.py <arguments>, where the possible arguments are:")
+    print("> hdf5_corrupter.py <arguments>, where the possible arguments are:")
     print("  -h | --help, optional argument, prints this message")
     print("  -c | --configFile \"path/to/config.yaml\", mandatory argument, the tool always needs a config.yaml")
     print("  -f | --hdf5File \"path/to/file.h5\", path to the hdf5 file to corrupt."
@@ -31,10 +31,12 @@ def print_tool_usage_and_exit():
           "\t*Overwrites value from config file*")
     print("  -k | --injectionTries <value>, value in [0-1] or int > 0, depending on injection_type, respectively."
           "\t*Overwrites value from config file*")
-    print("  -a | --scalingFactor <value>, optional, if used it ignores the bit range and multiplies every value"
-          "by this scaling factor")
-    print("  -b | --burst <value>, optional, default: 1, incompatible with scaling_factor, number of injection"
-          " attempts per value")
+    print("  -a | --scalingFactor <value>, optional, incompatible with scaling_factor or bit_mask "
+          "if used it ignores the bit range and multiplies every value by this scaling factor")
+    print("  -b | --burst <value>, optional, default: 1, incompatible with scaling_factor or bit_mask, "
+          "it is the number of injection attempts per value")
+    print("  -m | --bitMask <value>, optional, incompatible with scaling_factor or burst, uses a bit mask to corrupt "
+          "the values, the first bit to apply the mask in each value is randomly selected from [0 to 63-bitMaskLength]")
     print("  -s | --saveInjectionSequence, optional, incompatible with -i, saves the injection sequence to a file")
     print("  -i | --injectionSequencePath \"path/to/sequence.json\", optional, incompatible with -s, uses the injection"
           "injection sequence from the file for the injection. If used, the following settings will be ignored: "
@@ -45,10 +47,10 @@ def print_tool_usage_and_exit():
 
 
 def read_arguments(argument_list):
-    short_options = "hc:f:l:d:e:p:t:k:a:b:si:o"
+    short_options = "hc:f:l:d:e:p:t:k:a:b:m:si:o"
     long_options = ["help", "configFile=", "hdf5File=", "logFilePath=", "firstBit=", "lastBit=",
                     "injectionProbability=", "injectionType=", "injectionTries=", "scalingFactor=",
-                    "burst=", "saveInjectionSequence", "injectionSequencePath=", "onlyPrint"]
+                    "burst=", "bitMask=", "saveInjectionSequence", "injectionSequencePath=", "onlyPrint"]
     try:
         arguments, values = getopt.getopt(argument_list, short_options, long_options)
     except getopt.error as err:
@@ -79,6 +81,8 @@ def read_arguments(argument_list):
             globals.SCALING_FACTOR = float(current_value)
         if current_argument in ("-b", "--burst"):
             globals.BURST = int(current_value)
+        if current_argument in ("-m", "--bitMask"):
+            globals.BIT_MASK = current_value
         if current_argument in ("-s", "--saveInjectionSequence"):
             globals.SAVE_INJECTION_SEQUENCE = True
         if current_argument in ("-i", "--injectionSequencePath"):
@@ -148,7 +152,7 @@ def main():
         # normal injection
         else:
             # if first bit (sign-bit) not in range and ALLOW_SIGN_CHANGE is true, then increase by 1 the start of range
-            if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT > 0:
+            if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT is not None and globals.FIRST_BIT > 0:
                 globals.FIRST_BIT -= 1
 
             file_entries_count = hdf5_common.count_hdf5_file_entries(globals.HDF5_FILE)

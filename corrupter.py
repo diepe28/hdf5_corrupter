@@ -22,6 +22,7 @@ def log_delta(val_type: str, before_val, after_val, changed_bits, scaling_factor
 
 # given the range start and range end, it generates a random sample of the given length
 def generate_random_sample(start: int, end: int, length: int, allow_0=False):
+    random.seed(datetime.now())
     the_range = range(start, end)
     range_length = end - start
     sample = []
@@ -38,6 +39,26 @@ def generate_random_sample(start: int, end: int, length: int, allow_0=False):
         sample = [0 if x == start else x for x in sample]
 
     return sample
+
+
+# assumes string have same length
+def string_xor(str1: str, str2: str):
+    result = ""
+    for x, y in zip(str1, str2):
+        result += str(int(x) ^ int(y))
+
+    return result
+
+
+# given the bit mask and desired length, it pads n zeros at start and (length-n-mascLength) zeros at the end, n is rand
+def random_pad_mask(masc: str, length: int):
+    random.seed(datetime.now())
+    masc_length = len(masc)
+    start = random.randint(0, length - masc_length)
+    zeros_start = '0' * start
+    zeros_end = '0' * (length - masc_length - start)
+    result = zeros_start + masc + zeros_end
+    return result
 
 
 def bin_to_float(b):
@@ -83,16 +104,44 @@ def corrupt_float_at_bits(val: float, chosen_bits: []):
 
     failed_attempts = len(chosen_bits) - len(successful_bits)
     if failed_attempts > 0:
+        start = 0 if globals.FIRST_BIT is None else globals.FIRST_BIT
+        end = 63 if globals.LAST_BIT is None else globals.LAST_BIT
         new_val, other_successful_bits =\
             corrupt_float_at_bits(new_val, generate_random_sample(
-                start=globals.FIRST_BIT,
-                end=globals.LAST_BIT,
+                start=start,
+                end=end,
                 length=failed_attempts,
                 allow_0=globals.ALLOW_SIGN_CHANGE
             ))
         successful_bits.extend(other_successful_bits)
 
     return new_val, successful_bits
+
+
+# returns list with the indexes of all the 1s on the mask
+def get_corrupted_bits_from_mask(mask: str):
+    corrupted_bits = []
+    for i in range(0, len(mask)):
+        if mask[i] == '1':
+            corrupted_bits.append(i)
+
+    return corrupted_bits
+
+
+# corrupts a float value using a bit mask
+def corrupt_float_using_mask(val: float, mask: str):
+    return _corrupt_float_using_mask(val, mask, random_pad_mask(mask, globals.BITS_PER_FLOAT))
+
+
+# aux method
+def _corrupt_float_using_mask(val: float, mask: str, full_mask: str):
+    val_binary = float_to_bin(val)
+    new_binary = string_xor(val_binary, full_mask)
+    temp_val = bin_to_float(new_binary)
+    if not globals.ALLOW_NaN_VALUES and (math.isnan(temp_val) or math.isinf(temp_val)):
+        return corrupt_float_using_mask(val, mask)
+
+    return temp_val, get_corrupted_bits_from_mask(full_mask)
 
 
 # Given a corruption probability, it tries to corrupt the value at injection_burs-different bits
@@ -106,15 +155,23 @@ def try_corrupt_value(val, corruption_prob: float, injection_burst: int):
                 new_val, chosen_bits = corrupt_int(val)
                 log_delta("Int", val, new_val, chosen_bits)
             else:
-                chosen_bits = generate_random_sample(
-                    start=globals.FIRST_BIT,
-                    end=globals.LAST_BIT,
-                    length=injection_burst,
-                    allow_0=globals.ALLOW_SIGN_CHANGE
-                )
+                # Injection with bit range
+                if globals.BIT_MASK is None:
+                    chosen_bits = generate_random_sample(
+                        start=globals.FIRST_BIT,
+                        end=globals.LAST_BIT,
+                        length=injection_burst,
+                        allow_0=globals.ALLOW_SIGN_CHANGE
+                    )
+                    new_val, chosen_bits = corrupt_float_at_bits(val, chosen_bits)
+                    log_delta("Float", val, new_val, chosen_bits)
 
-                new_val, chosen_bits = corrupt_float_at_bits(val, chosen_bits)
-                log_delta("Float", val, new_val, chosen_bits)
+                # Injection with bit mask
+                else:
+                    new_val, chosen_bits = corrupt_float_using_mask(val, globals.BIT_MASK)
+                    log_delta("Float", val, new_val, chosen_bits)
+
+        # Injection with scaling factor
         else:
             new_val = val * globals.SCALING_FACTOR
             chosen_bits = [-2]  # -2, so it counts the injection
