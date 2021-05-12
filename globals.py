@@ -60,4 +60,5 @@ BURST_STR = "burst"
 BIT_MASK = None
 BIT_MASK_STR = "bit_mask"
 
-BITS_PER_FLOAT = 64
+FLOAT_PRECISION = None
+FLOAT_PRECISION_STR = "float_precision"

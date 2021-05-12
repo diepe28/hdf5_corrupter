@@ -9,6 +9,7 @@ Where the possible arguments are:
  - -c | --configFile "path/to/config.yaml", mandatory argument (unless used with -h)
  - -f | --hdf5File "path/to/file.h5", path to the hdf5 file to corrupt. *Overwrites value from config file*
  - -l | --logFilePath "path/to/logs/", path where to save the log files. *Overwrites value from config file*
+ - -g | --floatPrecision <value>, 32 or 64, the number of bits to use for each float value")
  - -d | --firstBit <value>, first bit to inject errors (0-63), leftmost is sign-bit, next 11 are exp bits, and the rest is mantissa. it must be <= than last_bit. *Overwrites value from config file*
  - -e | --lastBit <value>, last bit to inject errors (0-63), it must be >= than first_byte. If both values are the same, injection will only happen on that bit. *Overwrites value from config file*
  - -b | --burst <value>, optional, default: 1, incompatible with scaling_factor, number of injection attempts per value *Overwrites value from config file*
@@ -26,12 +27,12 @@ The .yaml configuration file must have the following entries:
 
 - *injection_probability*, probability to inject an error at each value
 - *injection_type*, is one of the following strings {"percentage", "count"}
-- *injection_tries*,is either a real number between [0-1] or a int > 0, depending if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1.
+- *injection_tries*,is either a real number between [0-1] or an int > 0, depending if injection_type is "percentage" or "count", respectively. This value might not be the actual value of corruption, because the injection probability can be < 1.
 
 - *log_file_path*, path where to save the log files.
-
-- *first_bit*, first bit to inject errors (0-63), leftmost is sign-bit, next 11 are exp bits and the rest is mantissa. it must be <= than last_bit.
-- *last_bit*, last bit to inject errors (0-63), it must be >= than first_byte. If both values are the same, injection will only happen on that bit.
+- *float_precision*, 32 or 64, the number of bits to use for each float value.
+- *first_bit*, first bit to inject errors (from 0 to float_precision-1), leftmost is sign-bit, next are exp bits and the rest is mantissa. it must be <= than last_bit.
+- *last_bit*, last bit to inject errors (from 0 to float_precision-1), it must be >= than first_byte. If both values are the same, injection will only happen on that bit.
 - *burst*, default: 1, number of bits to corrupt per value (chosen from the above range)
 - *scaling_factor*, incompatible with bit range, burst, bit_mask, values will be scaled by this factor
 - *bit_mask*, incompatible with bit range, burst, scaling factor. Corrupts using a bit mask. It pads a-zeros at start and b-zeros at the end of the mask where a+b+len(mask) = 64, a and b are chosen randomly, then it makes an xor with the binary representation of the val.
@@ -47,7 +48,8 @@ Example of a .yaml configuration file:
 >injection_probability: 1e-8  
 >injection_type: "count"  
 >log_file_path: "/home/someUser/Documents/logFiles/"  
->injection_tries: 5  
+>injection_tries: 5 
+>float_precision: 64 
 >first_bit: 0  
 >last_bit: 63
 >burst: 4  

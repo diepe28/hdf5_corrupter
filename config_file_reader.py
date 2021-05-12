@@ -14,6 +14,7 @@ def log_options():
     logging.info(" " + globals.INJECTION_PROBABILITY_STR + ": " + str(globals.INJECTION_PROBABILITY))
     logging.info(" " + globals.INJECTION_TYPE_STR + ": " + str(globals.INJECTION_TYPE))
     logging.info(" " + globals.INJECTION_TRIES_STR + ": " + str(globals.INJECTION_TRIES))
+    logging.info(" " + globals.FLOAT_PRECISION_STR + ": " + str(globals.FLOAT_PRECISION))
     logging.info(" " + globals.FIRST_BIT_STR + ": " + str(globals.FIRST_BIT))
     logging.info(" " + globals.LAST_BIT_STR + ": " + str(globals.LAST_BIT))
     if globals.BURST is not None:
@@ -68,6 +69,9 @@ def read_config_file(config_file_path: str):
         if globals.INJECTION_SEQUENCE_PATH_STR in data and globals.INJECTION_SEQUENCE_PATH == "":
             globals.INJECTION_SEQUENCE_PATH = data[globals.INJECTION_SEQUENCE_PATH_STR]
 
+        if globals.FLOAT_PRECISION_STR in data and globals.FLOAT_PRECISION is None:
+            globals.FLOAT_PRECISION = int(data[globals.FLOAT_PRECISION_STR])
+
         if globals.SCALING_FACTOR_STR in data and globals.SCALING_FACTOR is None:
             globals.SCALING_FACTOR = float(data[globals.SCALING_FACTOR_STR])
 
@@ -95,13 +99,17 @@ def read_config_file(config_file_path: str):
 
 
 def check_for_error_in_values():
+    if globals.FLOAT_PRECISION is None or (globals.FLOAT_PRECISION != 32 and globals.FLOAT_PRECISION != 64):
+        hdf5_common.handle_error("Float precision must be submitted and must be 32 or 64")
+
     if globals.FIRST_BIT is not None and globals.LAST_BIT is not None and\
             (globals.FIRST_BIT > globals.LAST_BIT or
              globals.FIRST_BIT < 0 or
-             globals.FIRST_BIT > 63 or
+             globals.FIRST_BIT > globals.FLOAT_PRECISION - 1 or
              globals.LAST_BIT < 0 or
-             globals.LAST_BIT > 63):
-        hdf5_common.handle_error("first_bit and last_bit must be an interval between [0-63]")
+             globals.LAST_BIT > globals.FLOAT_PRECISION - 1):
+        hdf5_common.handle_error("first_bit and last_bit must be an interval between"
+                                 " [0-" + globals.FLOAT_PRECISION - 1 + "]")
 
     if globals.INJECTION_TYPE not in globals.INJECTION_TYPE_VALUES:
         hdf5_common.handle_error("Injection type not recognized. It must be either \"percentage\" or \"count\"")
@@ -128,6 +136,8 @@ def check_for_error_in_values():
     if globals.SCALING_FACTOR is not None:
         incompatible_settings += 1
     if globals.BIT_MASK is not None:
+        if len(globals.BIT_MASK) > globals.FLOAT_PRECISION:
+            hdf5_common.handle_error("Length of bit mask must be <= float_precision")
         incompatible_settings += 1
 
     if incompatible_settings > 1:
