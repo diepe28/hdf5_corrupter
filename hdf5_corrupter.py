@@ -140,8 +140,7 @@ def main():
     logging.basicConfig(filename=log_file_name, filemode='w', format='%(levelname)s - %(message)s',
                         level=logging.DEBUG)
 
-    config_file_reader.check_for_error_in_values()
-    config_file_reader.log_options()
+    config_file_reader.init_corrupter()
 
     if globals.ONLY_PRINT:
         hdf5_common.print_hdf5_file(globals.HDF5_FILE)

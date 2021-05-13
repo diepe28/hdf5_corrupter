@@ -148,3 +148,14 @@ def check_for_error_in_values():
              globals.BIT_MASK is not None):
         hdf5_common.handle_error("'saveInjectionSequence' is not compatible with "
                                  "'injection sequence path' or scaling factor or bit mask")
+
+
+def init_corrupter():
+    check_for_error_in_values()
+    log_options()
+    if globals.FLOAT_PRECISION == 32:
+        globals.BYTES_PER_FLOAT = 4
+        globals.PRECISION_CODE = '!f'
+    else:
+        globals.BYTES_PER_FLOAT = 8
+        globals.PRECISION_CODE = '!d'

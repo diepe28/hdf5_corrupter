@@ -63,8 +63,8 @@ def random_pad_mask(masc: str, length: int):
 
 
 def bin_to_float(b):
-    bf = int_to_bytes(int(b, 2), 8)  # 8 bytes needed for IEEE 754 binary64.
-    return struct.unpack('>d', bf)[0]
+    bf = int_to_bytes(int(b, 2), globals.BYTES_PER_FLOAT)  # 8 bytes needed for IEEE 754 binary64.
+    return struct.unpack(globals.PRECISION_CODE, bf)[0]
 
 
 def int_to_bytes(n, length):  # Helper function
@@ -75,8 +75,7 @@ def float_to_bin(num):
     # Struct can provide us with the float packed into bytes. The '!' ensures that
     # it's in network byte order (big-endian) and the 'f' says that it should be
     # packed as a float. Alternatively, for double-precision, you could use 'd'.
-    precision_code = '!f' if globals.FLOAT_PRECISION == 32 else "!d"
-    packed = struct.pack(precision_code, num)
+    packed = struct.pack(globals.PRECISION_CODE, num)
     # print('Packed: %s' % repr(packed))
 
     # For each character in the returned string, we'll turn it into its corresponding

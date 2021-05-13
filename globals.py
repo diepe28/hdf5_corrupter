@@ -62,3 +62,6 @@ BIT_MASK_STR = "bit_mask"
 
 FLOAT_PRECISION = None
 FLOAT_PRECISION_STR = "float_precision"
+
+PRECISION_CODE = None
+BYTES_PER_FLOAT = None
