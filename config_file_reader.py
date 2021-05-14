@@ -99,8 +99,9 @@ def read_config_file(config_file_path: str):
 
 
 def check_for_error_in_values():
-    if globals.FLOAT_PRECISION is None or (globals.FLOAT_PRECISION != 32 and globals.FLOAT_PRECISION != 64):
-        hdf5_common.handle_error("Float precision must be submitted and must be 32 or 64")
+    if globals.FLOAT_PRECISION is None or \
+            (globals.FLOAT_PRECISION != 16 and globals.FLOAT_PRECISION != 32 and globals.FLOAT_PRECISION != 64):
+        hdf5_common.handle_error("Float precision must be submitted and must be 16, 32 or 64")
 
     if globals.FIRST_BIT is not None and globals.LAST_BIT is not None and\
             (globals.FIRST_BIT > globals.LAST_BIT or
@@ -108,8 +109,9 @@ def check_for_error_in_values():
              globals.FIRST_BIT > globals.FLOAT_PRECISION - 1 or
              globals.LAST_BIT < 0 or
              globals.LAST_BIT > globals.FLOAT_PRECISION - 1):
-        hdf5_common.handle_error("first_bit and last_bit must be an interval between"
-                                 " [0-" + globals.FLOAT_PRECISION - 1 + "]")
+        hdf5_common.handle_error("Float Precision is set to: " + str(globals.FLOAT_PRECISION) + " so "
+                                 "first_bit and last_bit must be an interval between"
+                                 " [0-" + str(globals.FLOAT_PRECISION - 1) + "]")
 
     if globals.INJECTION_TYPE not in globals.INJECTION_TYPE_VALUES:
         hdf5_common.handle_error("Injection type not recognized. It must be either \"percentage\" or \"count\"")
@@ -153,9 +155,13 @@ def check_for_error_in_values():
 def init_corrupter():
     check_for_error_in_values()
     log_options()
-    if globals.FLOAT_PRECISION == 32:
+
+    if globals.FLOAT_PRECISION == 64:
+        globals.BYTES_PER_FLOAT = 8
+        globals.PRECISION_CODE = '!d'
+    elif globals.FLOAT_PRECISION == 32:
         globals.BYTES_PER_FLOAT = 4
         globals.PRECISION_CODE = '!f'
     else:
-        globals.BYTES_PER_FLOAT = 8
-        globals.PRECISION_CODE = '!d'
+        globals.BYTES_PER_FLOAT = 2
+        globals.PRECISION_CODE = '!e'

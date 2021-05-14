@@ -21,7 +21,7 @@ def print_tool_usage_and_exit():
           "\t\t\t*Overwrites value from config file*")
     print("  -l | --logFilePath \"path/to/logs/\", path where to save the log files."
           "\t\t*Overwrites value from config file*")
-    print("  -g | --floatPrecision <value>, 32 or 64, the number of bits to use for each float value")
+    print("  -g | --floatPrecision <value>, 64, 32 or 16, the number of bits to use for each float value")
     print("  -d | --firstBit <value>, first bit to inject errors (0-floatPrecision-1), leftmost is sign-bit, next are "
           "exp bits and the rest is mantissa. it must be <= than last_bit..\t\t\t*Overwrites value from config file*")
     print("  -e | --lastBit <value>, last bit to inject errors (0-floatPrecision-1), must be >= than first_byte. If "
