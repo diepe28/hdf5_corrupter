@@ -40,22 +40,22 @@
 ################################################# Injector Parameters #################################################
 
 #hdf5_file: "/home/diego/Documents/hdf5_files/newFiles/ckpt_ch_alexnet_e_10.h5"
-hdf5_file: "/home/diego/Documents/hdf5_files/newFiles/test.h5"
+hdf5_file: "/home/diego/PycharmProjects/hdf5_corrupter/TestFiles/Comparator/After.h5"
 injection_probability: 1 # 1e-8
 injection_type: "count" #"percentage"
-injection_tries: 3000
+injection_tries: 3
 log_file_path: "/home/diego/PycharmProjects/hdf5_corrupter/log-"
 float_precision: 64
 #first_bit: 2
 #last_bit: 4
 #burst: 1
-scaling_factor: 8
+scaling_factor: 4
 #bit_mask: "101101"
 allow_sign_change: True
 allow_NaN_values: False
 #injection_sequence_path: "/home/diego/PycharmProjects/hdf5_corrupter/injectionSequence.json"
 #save_injection_sequence: True
-use_random_locations: False
+use_random_locations: True
 locations_to_corrupt:
   - "/predictor/conv1/"
   - "/predictor/conv2/"

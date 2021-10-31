@@ -9,20 +9,6 @@ import logging
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-
-def print_tool_usage_and_exit():
-    print("Correct usage of the tool: ")
-    print("> hdf<5_comparator.py <arguments>, where the possible arguments are:")
-    print("   -h | --help, optional argument, prints this message")
-    print("   -b | --beforeFile \"path/to/beforeFile.h5\", path to the before hdf5 file .")
-    print("   -a | --afterFile \"path/to/afterFile.h5\", path to the after hdf5 file .")
-    print("   -l | --locationsToCompare, optional argument, a list of locations paths inside the hdf5 file to compare, "
-          "it will compare all the leaf objects inside such locations. If not given it will use all locations")
-    print("   -p | --printDetails, optional argument, If given, prints the diffs for each object compared")
-    logging.critical("Wrong use of the tool... exiting")
-    sys.exit(2)
-
-
 @dataclass
 class Diff:
     entries_count: float
@@ -31,18 +17,32 @@ class Diff:
     diffs: []
 
 
+def print_tool_usage_and_exit():
+    print("Correct usage of the tool: ")
+    print("> hdf<5_comparator.py <arguments>, where the possible arguments are:")
+    print("   -h | --help, optional argument, prints this message")
+    print("   -b | --beforeFile \"path/to/beforeFile.h5\", path to the before hdf5 file .")
+    print("   -a | --afterFile \"path/to/afterFile.h5\", path to the after hdf5 file .")
+    print(
+        "   -l | --locationsToCompare, optional argument, a list of locations paths inside the hdf5 file to compare, "
+        "it will compare all the leaf objects inside such locations. If not given it will use all locations")
+    print("   -p | --printDetails, optional argument, If given, prints the diffs for each object compared")
+    logging.critical("Wrong use of the tool... exiting")
+    sys.exit(2)
+
+
 def diff_print(dd: Diff, tabs: str, prefix: str):
     if dd.diff_count > 0 and dd.entries_count > 0:
         diff_percentage = str(dd.diff_count * 100 / dd.entries_count)
         distance = "" if dd.euclidean_distance == -1 else " Euclidean distance: " + str(dd.euclidean_distance)
         txt = "{tabs_str} {prefix_str} {diff_count_str} diff count. Representing {percentage_str}%. {distance_str}\n" \
               "{tabs_str} Actual diffs: {diffs}\n".\
-            format(tabs_str=tabs, prefix_str=prefix, diff_count_str=dd.diff_count, percentage_str=diff_percentage,
-                   distance_str=distance, diffs=dd.diffs)
+                format(tabs_str=tabs, prefix_str=prefix, diff_count_str=dd.diff_count, percentage_str=diff_percentage,
+                       distance_str=distance, diffs=dd.diffs)
         print(txt)
 
 
-def compare_datasets(before_dataset, after_dataset):
+def compare_datasets( before_dataset, after_dataset):
     if before_dataset.ndim != after_dataset.ndim:
         return Diff(entries_count=0, diff_count=0, euclidean_distance=-1, diffs=[])
 
@@ -87,6 +87,8 @@ def compare_files(before_file: str, after_file: str, locations_to_use: [], print
             child_locations = hdf5_common.get_full_location_paths([base_location], before_locations)
             final_locations.append(child_locations)
 
+        # first value of all diffs in the File Diff, which will be constructed in the loops
+        all_diffs = [Diff(0, 0, -1, [])]
         with h5py.File(before_file, 'r') as before_hdf5:
             with h5py.File(after_file, 'r') as after_hdf5:
                 for children_locations in final_locations:
@@ -108,7 +110,12 @@ def compare_files(before_file: str, after_file: str, locations_to_use: [], print
                     if base_location_diff.diff_count > 0:
                         print("\n--Summary of comparison for \"" + base_location + "\" ---")
                         diff_print(base_location_diff, "\t", "")
+                        # Add info of location to File Diff (first in the diff list)
+                        all_diffs.append(base_location_diff)
+                        all_diffs[0].diff_count += base_location_diff.diff_count
+                        all_diffs[0].entries_count += base_location_diff.entries_count
 
+        return all_diffs
     else:
         print("One of the files does not exits! Exiting the tool...")
         sys.exit(2)

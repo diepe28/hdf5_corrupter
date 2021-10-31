@@ -48,6 +48,10 @@ def print_tool_usage_and_exit():
 
 
 def read_arguments(argument_list):
+    """ Reads the arguments from the command line and sets the global values
+    :param argument_list: the arguments from the terminal
+    :return: nothing
+    """
     short_options = "hc:f:l:g:d:e:p:t:k:a:b:m:si:o"
     long_options = ["help", "configFile=", "hdf5File=", "logFilePath=", "floatPrecision=", "firstBit=", "lastBit=",
                     "injectionProbability=", "injectionType=", "injectionTries=", "scalingFactor=",
@@ -60,7 +64,7 @@ def read_arguments(argument_list):
     if argument_list.__len__() == 0 or argument_list.__len__() > len(long_options) * 2:
         print_tool_usage_and_exit()
 
-    # Validate argument
+    # Iterating over arguments
     for current_argument, current_value in arguments:
         if current_argument in ("-c", "--configFile"):
             globals.CONFIG_FILE_PATH = current_value
