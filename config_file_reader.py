@@ -143,7 +143,7 @@ def check_for_error_in_values():
         incompatible_settings += 1
 
     if incompatible_settings > 1:
-        hdf5_common.handle_error("bit range, scaling factor, bit mask are incompatible settings")
+        hdf5_common.handle_error("bit range (also burst), scaling factor, bit mask are incompatible settings")
 
     if globals.SAVE_INJECTION_SEQUENCE and \
             (globals.INJECTION_SEQUENCE_PATH != "" or globals.SCALING_FACTOR is not None or

@@ -9,27 +9,28 @@
 #
 #    log_file_path                path where to save the log files.
 #
-#    float_precision              64, 32 or 16, the number or bits to use for each float value
+#    float_precision              64, 32 or 16, the number of bits to use for each float value
 #
 #    first_bit                    first bit to inject errors (from 0 to float_precision-1), must be <= than last_bit.
 #    last_bit                     last bit to inject errors (from 0 to float_precision-1), must be >= than first_byte.
 #                                 If both values are the same, injection will only happen on that bit.
 #
-#    burst                        Default: 1, number of bits to corrupt per value (chosen from the above range)
-#    scaling_factor               incompatible with bit range, burst, bit_mask, values will be scaled by this factor
-#    bit_mask                     incompatible with bit range, burst, scaling factor. Corrupts using a bit mask. It pads
-#                                 a-zeros at start and b-zeros at the end of the mask (a,b are chosen randomly) where
-#                                 a+b+len(mask) = float_precision, then it XORs the mask vs the bin of the val.
+#    burst                        Default: 1, only valid when using a bit range. Number of bits to corrupt per value
+#                                 (chosen from the said range)
+#    scaling_factor               incompatible with bit range, burst and bit_mask. Values will be scaled by this factor
+#    bit_mask                     incompatible with bit range, burst and scaling factor. Corrupts using a bit mask. It
+#                                 pads a-zeros at start and b-zeros at the end of the mask (a,b are chosen randomly)
+#                                 where a+b+len(mask) = float_precision, then it XORs the mask vs the bin of the val.
 #
-#    allow_sign_change            True,   when corruption is on float value, even if the sign-bit (0) is not included
-#                                         in the above range, it will also enable bit flips on it.
+#    allow_sign_change            True,   when corruption happens on a float value, even if the sign-bit (0) is not
+#                                         included in the above range, it will also enable bit flips on it.
 #                                 False,  it respects the above range.
 #
-#    allow_NaN_values             when flipping a bit of the in a double, the resulting binary can represent a NaN or
-#                                 Inf, if set to False, the corruption mechanism will never produce such values.
+#    allow_NaN_values             when flipping a bit of a float, the resulting binary can represent a NaN or +-Inf.
+#                                 If this value is False, the corruption mechanism will never produce such values.
 #
-#   save_injection_sequence       If True, it saves to json all the bits that were changed for each location specified.
-#   injection_sequence_path       If used, loads the injection sequence from a json and uses those bits to corrupt the
+#   save_injection_sequence       If True, it saves to .json all the bits that were changed for each location specified.
+#   injection_sequence_path       If used, loads the injection sequence from a .json and uses those bits to corrupt the
 #                                 locations specified at the sequence.
 #
 #    use_random_locations         choose random locations on the file to inject errors,
@@ -38,16 +39,17 @@
 #    locations_to_corrupt         list of locations to try to inject errors
 ################################################# Injector Parameters #################################################
 
-hdf5_file: "/home/diego/Documents/hdf5_files/newFiles/ckpt_ch_alexnet_e_10.h5"
+#hdf5_file: "/home/diego/Documents/hdf5_files/newFiles/ckpt_ch_alexnet_e_10.h5"
+hdf5_file: "/home/diego/Documents/hdf5_files/newFiles/test.h5"
 injection_probability: 1 # 1e-8
 injection_type: "count" #"percentage"
 injection_tries: 3000
 log_file_path: "/home/diego/PycharmProjects/hdf5_corrupter/log-"
 float_precision: 64
-first_bit: 2
-last_bit: 63
-burst: 1
-#scaling_factor: 100
+#first_bit: 2
+#last_bit: 4
+#burst: 1
+scaling_factor: 8
 #bit_mask: "101101"
 allow_sign_change: True
 allow_NaN_values: False

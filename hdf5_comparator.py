@@ -55,12 +55,17 @@ def compare_datasets(before_dataset, after_dataset):
         before_narray = np.array(before_dataset).flatten()
         after_narray = np.array(after_dataset).flatten()
 
-        # calculates the diffs of entries in the arrays that are different
-        diffs = [abs(y-x)/x for (x, y) in zip(before_narray, after_narray) if x != y]
-        diff_count = diffs.__len__()
-
-        euclidean_dist = numpy.linalg.norm(before_narray - after_narray)
-        entries_count = np.prod(before_dataset.shape)
+        try:
+            # calculates the diffs of entries in the arrays that are different
+            diffs = [abs(y - x) / x for (x, y) in zip(before_narray, after_narray) if x != y]
+            diff_count = diffs.__len__()
+            euclidean_dist = numpy.linalg.norm(before_narray - after_narray)
+            entries_count = np.prod(before_dataset.shape)
+        except getopt.error as err:
+            diffs = []
+            diff_count = -1
+            euclidean_dist = -1
+            entries_count = -1
 
     return Diff(entries_count, diff_count, euclidean_dist, diffs)
 
@@ -100,9 +105,7 @@ def compare_files(before_file: str, after_file: str, locations_to_use: [], print
                             print("Object: " + location + " does not exits in both files... skipping it")
 
                     base_location = hdf5_common.get_base_locations_for(location, base_locations=locations_to_use)
-                    if base_location_diff.diff_count == 0:
-                        print("\n--\"" + base_location + "\" has not differences ---")
-                    else:
+                    if base_location_diff.diff_count > 0:
                         print("\n--Summary of comparison for \"" + base_location + "\" ---")
                         diff_print(base_location_diff, "\t", "")
 
@@ -145,7 +148,10 @@ def main():
 
     # before_file_path = "/home/diego/Documents/hdf5_files/check_model_pytorch-original.h5"
     # after_file_path = "/home/diego/Documents/hdf5_files/check_model_pytorch.h5"
-    locations_to_compare = [x.strip() for x in locations_to_compare]
+    if locations_to_compare.__len__() == 0:
+        locations_to_compare = hdf5_common.get_hdf5_file_leaf_locations(before_file_path)
+    else:
+        locations_to_compare = [x.strip() for x in locations_to_compare]
     print("***--- HDF5 file comparison ---***")
     print(" Before File: " + before_file_path)
     print(" After File:  " + after_file_path)
