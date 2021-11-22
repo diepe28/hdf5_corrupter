@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 
+ARG_PARSER = None
+
 ONLY_PRINT = False
 CONFIG_FILE_PATH = ""
 
-INJECTION_PROBABILITY = -1
+INJECTION_PROBABILITY = 1
 INJECTION_PROBABILITY_STR = "injection_probability"
 
 INJECTION_TYPE = ""
@@ -24,7 +26,7 @@ LAST_BIT_STR = "last_bit"
 ALLOW_SIGN_CHANGE = True
 ALLOW_SIGN_CHANGE_STR = "allow_sign_change"
 
-USE_RANDOM_LOCATIONS = True
+USE_RANDOM_LOCATIONS = False
 USE_RANDOM_LOCATIONS_STR = "use_random_locations"
 
 ALLOW_NaN_VALUES = False
@@ -38,7 +40,7 @@ BASE_LOCATIONS = []
 LOCATIONS_TO_CORRUPT = []
 LOCATIONS_TO_CORRUPT_STR = "locations_to_corrupt"
 
-HDF5_FILE = ""
+HDF5_FILE = None
 HDF5_FILE_STR = "hdf5_file"
 
 LOG_FILE_PATH = ""
@@ -54,7 +56,7 @@ INJECTION_SEQUENCE = {}
 SCALING_FACTOR = None
 SCALING_FACTOR_STR = "scaling_factor"
 
-BURST = None
+BURST = 1
 BURST_STR = "burst"
 
 BIT_MASK = None

@@ -2,19 +2,19 @@ import h5py
 import numpy as np
 import sys, getopt
 import os
-import config_file_reader
+import settings_reader
 import globals
 import corrupter
 import logging
-from datetime import datetime
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
 
-def handle_error(error_message):
-    error_message = "CRITICAL: " + error_message
+def handle_error(error_message, arg_parser: object):
+    error_message = "CRITICAL: " + error_message + "\n"
     print(error_message)
     logging.error(error_message)
+    arg_parser.print_help()
     sys.exit(2)
 
 
@@ -95,6 +95,12 @@ def count_hdf5_file_entries(input_file: str):
 
 # each item is a tuple: {name, group}
 def __get_hdf5_file_leaf_locations(item: tuple, leaf_locations: list, prefix: str):
+    """ Stores in @leaf_locations all the leaves of the tree
+    :param item: a node of the tree with {item_name, item_val}, where val can be a list of its children
+    :param leaf_locations: the list where the leaves are added
+    :param prefix: the current full path name
+    :return: nothing
+    """
     item_name = prefix + item[0]
     item_val = item[1]
 
@@ -126,10 +132,14 @@ def get_hdf5_file_leaf_locations(input_file: str):
     return leaf_locations
 
 
-# given the paths to corrupt, it calculates all the full location paths within each paths given
-# Example: locations_to_corrupt = ["conv1", "conv2"], and within each one of them there are two objects, so
-# it will return ["conv1/object1", "conv1/object2", "conv2/object1", "conv2/object2"]
 def get_full_location_paths(locations_to_corrupt: [], all_location_paths: []):
+    """ Given the paths to corrupt, it calculates all the full location paths within each path
+    Example: locations_to_corrupt = ["conv1", "conv2"], and within each one of them there are two objects, so
+    it will return ["conv1/object1", "conv1/object2", "conv2/object1", "conv2/object2"]
+    :param locations_to_corrupt:
+    :param all_location_paths:
+    :return:
+    """
     full_location_paths = []
     for corruptible_location in locations_to_corrupt:
         location_exists = False

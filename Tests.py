@@ -3,7 +3,7 @@ import hdf5_common
 import hdf5_comparator
 
 
-class TestComparator(unittest.TestCase):
+class ComparatorTests(unittest.TestCase):
 
     def test_equal_files(self):
         file_path = "TestFiles/Comparator/Before.h5"
@@ -19,3 +19,8 @@ class TestComparator(unittest.TestCase):
         diffs = hdf5_comparator.compare_files(before_file_path, after_file_path, locations_to_compare, print_details=False)
         files_diff = diffs[0]
         self.assertEqual(files_diff.diff_count, 3, "Should be 3")
+
+
+class CorrupterTests(unittest.TestCase):
+    def test_configFile_case1(self):
+
