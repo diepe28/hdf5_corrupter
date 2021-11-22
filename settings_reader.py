@@ -111,10 +111,10 @@ def set_arguments_parser(parser: object):
                         help="prints the contents of the hdf5 file specified and exits")
 
 
-def read_arguments():
+def read_arguments(arguments):
     globals.ARG_PARSER = argparse.ArgumentParser()
     set_arguments_parser(globals.ARG_PARSER)
-    args = globals.ARG_PARSER.parse_args()
+    args = globals.ARG_PARSER.parse_args(arguments)
 
     # the only param compatible either with config file or arguments
     if args.onlyPrint is not None:

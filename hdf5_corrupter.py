@@ -1,5 +1,5 @@
 import json
-import getopt
+import sys
 import os
 from os import path
 import settings_reader
@@ -43,7 +43,7 @@ def save_injection_sequence(json_file_name: str):
 
 
 def main():
-    settings_reader.read_arguments()
+    settings_reader.read_arguments(sys.argv[1:])
 
     config_file_name = os.path.basename(globals.CONFIG_FILE_PATH).rsplit('.', 1)[0]
     now = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
