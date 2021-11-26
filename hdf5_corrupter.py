@@ -64,9 +64,11 @@ def main():
 
         # normal injection
         else:
+            logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BIT) + "-" + str(globals.LAST_BIT) + "]")
             # if first bit (sign-bit) not in range and ALLOW_SIGN_CHANGE is true, then increase by 1 the start of range
             if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT is not None and globals.FIRST_BIT > 0:
                 globals.FIRST_BIT -= 1
+                logging.info("Sign change is allowed")
 
             file_entries_count = hdf5_common.count_hdf5_file_entries(globals.HDF5_FILE)
             # calculates the number of injection attempts, based on the desired corruption percentage
@@ -77,7 +79,6 @@ def main():
                 num_injection_tries = globals.INJECTION_TRIES
 
             logging.info("Will inject at most: " + str(num_injection_tries) + " errors")
-            logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BIT) + "-" + str(globals.LAST_BIT) + "]")
 
             errors_injected = corrupter.try_corrupt_hdf5_file(globals.HDF5_FILE, globals.LOCATIONS_TO_CORRUPT,
                                                               globals.INJECTION_PROBABILITY, num_injection_tries,

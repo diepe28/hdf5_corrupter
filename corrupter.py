@@ -25,7 +25,7 @@ def log_delta(val_type: str, before_val, after_val, changed_bits, scaling_factor
 # given the range start and range end, it generates a random sample of the given length
 def generate_random_sample(start: int, end: int, length: int, allow_0=False):
     random.seed(datetime.now())
-    the_range = range(start, end)
+    the_range = range(start, end+1)
     range_length = end - start
     sample = []
     while length > range_length:
@@ -125,6 +125,12 @@ def change_bit_in_binary(binary: str, index: int):
 
 
 def corrupt_int(val: int):
+    """
+    Corrupts an integer value, since the byte length of integers is not fixed, we just flip a random bit given the
+    binary representation that python itself returns when calling bin(values)
+    :param val: The value to corrupt
+    :return: The corrupted value
+    """
     binary = str(bin(val))[2:]
     chosen_bit = randint(0, len(binary) - 1)
     new_binary = change_bit_in_binary(binary, chosen_bit)
@@ -187,7 +193,7 @@ def _corrupt_float_using_mask(val: float, mask: str, full_mask: str):
     return temp_val, get_corrupted_bits_from_mask(full_mask)
 
 
-# Given a corruption probability, it tries to corrupt the value at injection_burs-different bits
+# Given a corruption probability, it tries to corrupt the value at injection_burst-different bits
 def try_corrupt_value(val, corruption_prob: float, injection_burst: int):
     random.seed(datetime.now())
     chosen_bits = None
