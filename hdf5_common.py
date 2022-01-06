@@ -79,7 +79,6 @@ def count_hdf5_item_entries(item: tuple):
 
 def count_hdf5_file_entries(input_file: str):
     count = 0
-    logging.info("Counting number of entries in the file")
     if os.path.exists(input_file):
         with h5py.File(input_file, 'r') as hdf:
             base_items = list(hdf.items())

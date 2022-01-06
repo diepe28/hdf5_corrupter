@@ -14,8 +14,11 @@ def log_options():
     logging.info(" " + globals.INJECTION_TYPE_STR + ": " + str(globals.INJECTION_TYPE))
     logging.info(" " + globals.INJECTION_TRIES_STR + ": " + str(globals.INJECTION_TRIES))
     logging.info(" " + globals.FLOAT_PRECISION_STR + ": " + str(globals.FLOAT_PRECISION))
-    logging.info(" " + globals.FIRST_BIT_STR + ": " + str(globals.FIRST_BIT))
-    logging.info(" " + globals.LAST_BIT_STR + ": " + str(globals.LAST_BIT))
+    if globals.FLOAT_PRECISION == "auto":
+        logging.info(" Bit range is calculated based on value precision")
+    else:
+        logging.info(" " + globals.FIRST_BIT_STR + ": " + str(globals.FIRST_BIT))
+        logging.info(" " + globals.LAST_BIT_STR + ": " + str(globals.LAST_BIT))
     if globals.BURST is not None:
         logging.info(" Injection burst (num of changed bits per value): " + str(globals.BURST))
     logging.info(" " + globals.ALLOW_SIGN_CHANGE_STR + ": " + str(globals.ALLOW_SIGN_CHANGE))
@@ -56,8 +59,8 @@ def set_arguments_parser(parser: object):
     parser.add_argument("--logFilePath", type=str,
                         help="\"path/to/logs/\", path where to save the log files.")
 
-    parser.add_argument("--floatPrecision", type=int,
-                        help="<value>, 64, 32 or 16, the number of bits to use for each float value")
+    parser.add_argument("--floatPrecision", type=str,
+                        help="<value>, auto, 64, 32 or 16, the number of bits to use for each float value")
 
     parser.add_argument("--firstBit", type=int,
                         help="first bit to inject errors [0-floatPrecision-1], leftmost is sign-bit, next are "
@@ -197,7 +200,7 @@ def read_config_file(config_file_path: str):
             globals.INJECTION_SEQUENCE_PATH = data[globals.INJECTION_SEQUENCE_PATH_STR]
 
         if globals.FLOAT_PRECISION_STR in data:
-            globals.FLOAT_PRECISION = int(data[globals.FLOAT_PRECISION_STR])
+            globals.FLOAT_PRECISION = data[globals.FLOAT_PRECISION_STR]
 
         if globals.SCALING_FACTOR_STR in data:
             globals.SCALING_FACTOR = float(data[globals.SCALING_FACTOR_STR])
@@ -215,96 +218,101 @@ def read_config_file(config_file_path: str):
             globals.BURST = int(data[globals.BURST_STR])
 
 
-def check_for_error_in_values():
-    if globals.HDF5_FILE is None:
-        hdf5_common.handle_error("HDF5 file must be provided",
-                                 globals.ARG_PARSER)
-
-    if globals.FLOAT_PRECISION is None or \
-            (globals.FLOAT_PRECISION != 16 and globals.FLOAT_PRECISION != 32 and globals.FLOAT_PRECISION != 64):
-        hdf5_common.handle_error("Float precision must be submitted and must be 16, 32 or 64",
-                                 globals.ARG_PARSER)
-
-    if globals.FIRST_BIT is not None and globals.LAST_BIT is not None and\
-            (globals.FIRST_BIT > globals.LAST_BIT or
-             globals.FIRST_BIT < 0 or
-             globals.FIRST_BIT > globals.FLOAT_PRECISION - 1 or
-             globals.LAST_BIT < 0 or
-             globals.LAST_BIT > globals.FLOAT_PRECISION - 1):
-        hdf5_common.handle_error("Float Precision is set to: " + str(globals.FLOAT_PRECISION) + " so "
-                                 "first_bit and last_bit must be an interval between"
-                                 " [0-" + str(globals.FLOAT_PRECISION - 1) + "]",
-                                 globals.ARG_PARSER)
-
-    if globals.INJECTION_TYPE not in globals.INJECTION_TYPE_VALUES:
-        hdf5_common.handle_error("Injection type not given or not recognized. "
-                                 "It must be either \"percentage\" or \"count\"",
-                                 globals.ARG_PARSER)
-
-    if globals.INJECTION_TYPE == globals.PERCENTAGE_STR and \
-            (globals.INJECTION_TRIES < 0 or globals.INJECTION_TRIES > 1):
-        hdf5_common.handle_error("Injection tries for corruption type \"percentage\" must be a value between [0-1]",
-                                 globals.ARG_PARSER)
-
-    if globals.INJECTION_TYPE == globals.COUNT_STR:
-        # truncate to integer value
-        int_value = int(globals.INJECTION_TRIES)
-        globals.INJECTION_TRIES = int_value
-
-    if globals.INJECTION_TRIES < 1:
-        hdf5_common.handle_error("Injection tries for corruption type \"count\" must be given and it"
-                                 " must be a positive integer",
-                                 globals.ARG_PARSER)
-
-    if globals.BURST is not None and globals.BURST < 1:
-        hdf5_common.handle_error("Injection burst must be a positive integer",
-                                 globals.ARG_PARSER)
-
+def are_settings_incompatible():
     incompatible_settings = 0
+
+    if globals.FLOAT_PRECISION == "auto":
+        incompatible_settings += 1
     if globals.BURST > 1 or globals.FIRST_BIT is not None or globals.LAST_BIT is not None:
         incompatible_settings += 1
     if globals.SCALING_FACTOR is not None:
         incompatible_settings += 1
     if globals.BIT_MASK is not None:
-        if len(globals.BIT_MASK) > globals.FLOAT_PRECISION:
+        if len(globals.BIT_MASK) > int(globals.FLOAT_PRECISION):
             hdf5_common.handle_error("Length of bit mask must be <= float_precision", globals.ARG_PARSER)
         incompatible_settings += 1
 
-    # if bit range, scaling factor and bit mask are not provided, by default will use bit range
+    # if bit-range, scaling factor and bit mask are not provided, by default will use a bit-range
     if incompatible_settings == 0:
         globals.FIRST_BIT = 0
-        globals.LAST_BIT = globals.FLOAT_PRECISION - 1
+        globals.LAST_BIT = int(globals.FLOAT_PRECISION) - 1
 
-    if incompatible_settings > 1:
-        hdf5_common.handle_error("bit range (also burst), scaling factor, bit mask are incompatible settings",
-                                 globals.ARG_PARSER)
+    return incompatible_settings > 1
 
-    if globals.SAVE_INJECTION_SEQUENCE and \
+
+def get_error_in_settings():
+    error_msg = None
+
+    if globals.INJECTION_TYPE == globals.COUNT_STR:
+        # truncate to integer value
+        globals.INJECTION_TRIES = int(globals.INJECTION_TRIES)
+
+    if globals.HDF5_FILE is None:
+        error_msg = "HDF5 file must be provided"
+
+    elif globals.FLOAT_PRECISION is None or \
+            (globals.FLOAT_PRECISION != "16" and globals.FLOAT_PRECISION != "32" and
+             globals.FLOAT_PRECISION != "64" and globals.FLOAT_PRECISION != "auto"):
+        error_msg = "Float precision must be submitted and must be 16, 32, 64 or auto"
+
+    elif globals.FLOAT_PRECISION == "auto" and\
+            (globals.FIRST_BIT is not None and globals.LAST_BIT is not None) or \
+            globals.SCALING_FACTOR is not None or \
+            globals.BIT_MASK is not None:
+        error_msg = "Float Precision is set to 'auto'. Therefore a bit range, " \
+                    "scaling factor or bit masks are not allowed"
+
+    elif globals.FIRST_BIT is not None and globals.LAST_BIT is not None and\
+            (globals.FIRST_BIT > globals.LAST_BIT or
+             globals.FIRST_BIT < 0 or
+             globals.FIRST_BIT > int(globals.FLOAT_PRECISION) - 1 or
+             globals.LAST_BIT < 0 or
+             globals.LAST_BIT > int(globals.FLOAT_PRECISION) - 1):
+        error_msg = "Float Precision is set to: " + str(globals.FLOAT_PRECISION) + " so "\
+                     "first_bit and last_bit must be an interval between "\
+                     "[0-" + str(int(globals.FLOAT_PRECISION) - 1) + "]"
+
+    elif globals.INJECTION_TYPE not in globals.INJECTION_TYPE_VALUES:
+        error_msg = "Injection type not given or not recognized. "\
+                    "It must be either \"percentage\" or \"count\""
+
+    elif globals.INJECTION_TYPE == globals.PERCENTAGE_STR and \
+            (globals.INJECTION_TRIES < 0 or globals.INJECTION_TRIES > 1):
+        error_msg = "Injection tries for corruption type \"percentage\" must be a value between [0-1]"
+
+    elif globals.INJECTION_TRIES < 1:
+        error_msg = "Injection tries for corruption type \"count\" must be given and it must be a positive integer"
+
+    elif globals.BURST is not None and globals.BURST < 1:
+        error_msg = "Injection burst must be a positive integer"
+
+    elif are_settings_incompatible():
+        error_msg = "bit range (also burst), scaling factor, bit mask are incompatible settings"
+
+    elif globals.SAVE_INJECTION_SEQUENCE and \
             (globals.INJECTION_SEQUENCE_PATH != "" or globals.SCALING_FACTOR is not None or
              globals.BIT_MASK is not None):
-        hdf5_common.handle_error("'saveInjectionSequence' is not compatible with "
-                                 "'injection sequence path' or scaling factor or bit mask",
-                                 globals.ARG_PARSER)
+        error_msg = "'saveInjectionSequence' is not compatible with "\
+                    "'injection sequence path' or scaling factor or bit mask"
 
-    if globals.SAVE_INJECTION_SEQUENCE and globals.INJECTION_SEQUENCE_PATH != "":
-        hdf5_common.handle_error("--saveInjectionSequence and --injectionSequencePath are incompatible options",
-                                 globals.ARG_PARSER)
+    elif globals.SAVE_INJECTION_SEQUENCE and globals.INJECTION_SEQUENCE_PATH != "":
+        error_msg = "--saveInjectionSequence and --injectionSequencePath are incompatible options"
 
-    if not globals.LOCATIONS_TO_CORRUPT and not globals.USE_RANDOM_LOCATIONS:
-        hdf5_common.handle_error("Locations to corrupt must be provided when not using random locations",
-                                 globals.ARG_PARSER)
+    elif not globals.LOCATIONS_TO_CORRUPT and not globals.USE_RANDOM_LOCATIONS:
+        error_msg = "Locations to corrupt must be provided when not using random locations"
+
+    return error_msg
 
 
 def init_corrupter():
-    check_for_error_in_values()
+    error_msg = get_error_in_settings()
+    if error_msg is not None:
+        hdf5_common.handle_error(error_msg, globals.ARG_PARSER)
+
     log_options()
 
-    if globals.FLOAT_PRECISION == 64:
-        globals.BYTES_PER_FLOAT = 8
-        globals.PRECISION_CODE = '!d'
-    elif globals.FLOAT_PRECISION == 32:
-        globals.BYTES_PER_FLOAT = 4
-        globals.PRECISION_CODE = '!f'
+    if globals.FLOAT_PRECISION is None or globals.FLOAT_PRECISION == "auto":
+        # at the start, precision settings are set for 32-bit floats
+        globals.set_precision_settings(32)
     else:
-        globals.BYTES_PER_FLOAT = 2
-        globals.PRECISION_CODE = '!e'
+        globals.set_precision_settings(int(globals.FLOAT_PRECISION))

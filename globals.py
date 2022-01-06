@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from enum import Enum
 
 ARG_PARSER = None
 
@@ -67,3 +67,56 @@ FLOAT_PRECISION_STR = "float_precision"
 
 PRECISION_CODE = None
 BYTES_PER_FLOAT = None
+
+
+def set_precision_settings(float_precision_val):
+    """
+    Sets the precision settings based on the given precision
+    :param float_precision_val: The current float precision
+    """
+    global BYTES_PER_FLOAT
+    global PRECISION_CODE
+    if float_precision_val == 64:
+        BYTES_PER_FLOAT = 8
+        PRECISION_CODE = '!d'
+    elif float_precision_val == 32:
+        BYTES_PER_FLOAT = 4
+        PRECISION_CODE = '!f'
+    else:
+        BYTES_PER_FLOAT = 2
+        PRECISION_CODE = '!e'
+
+
+# Error Messages
+class SettingErrors(Enum):
+    MISSING_HDF5_FILE = 1
+    MISSING_LOCATIONS_TO_CORRUPT = 2
+    WRONG_FLOAT_PRECISION = 3
+    WRONG_BIT_RANGE = 4
+    WRONG_INJECTION_TYPE = 5
+    WRONG_PERCENTAGE_INJECTION_TRIES = 6
+    WRONG_COUNT_INJECTION_TRIES = 7
+    WRONG_INJECTION_BURST = 8
+    WRONG_BIT_MASK = 9
+    INCOMPATIBLE_INJECTION_MODE = 10
+    INCOMPATIBLE_INJECTION_SEQUENCE_WITH_NO_BIT_RANGE = 11
+    INCOMPATIBLE_INJECTION_SEQUENCE_READ_WRITE = 12
+
+
+ERRORS = {
+    SettingErrors.MISSING_HDF5_FILE: "HDF5 file must be provided",
+    SettingErrors.MISSING_LOCATIONS_TO_CORRUPT: "",
+    SettingErrors.WRONG_FLOAT_PRECISION: "Float precision must be submitted and must be 16, 32, 64 or auto",
+    SettingErrors.WRONG_BIT_RANGE: "",
+    SettingErrors.WRONG_INJECTION_TYPE: "",
+    SettingErrors.WRONG_PERCENTAGE_INJECTION_TRIES: "",
+    SettingErrors.WRONG_COUNT_INJECTION_TRIES: "",
+    SettingErrors.WRONG_INJECTION_BURST: "",
+    SettingErrors.WRONG_BIT_MASK: "",
+    SettingErrors.INCOMPATIBLE_INJECTION_MODE: "",
+    SettingErrors.INCOMPATIBLE_INJECTION_SEQUENCE_WITH_NO_BIT_RANGE: "",
+    SettingErrors.INCOMPATIBLE_INJECTION_SEQUENCE_READ_WRITE: ""
+}
+
+
+

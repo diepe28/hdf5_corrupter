@@ -19,7 +19,7 @@ def log_delta(val_type: str, before_val, after_val, changed_bits, scaling_factor
         "at bits: " + str(changed_bits)
 
     logging.debug(val_type + " location value was corrupted " + corruption_type +
-                  "  Delta> " + str(before_val) + " --> " + str(after_val))
+                  "  Delta: " + str(before_val) + " --> " + str(after_val) + "\n")
 
 
 # given the range start and range end, it generates a random sample of the given length
@@ -75,11 +75,12 @@ def int_to_bytes(n, length):  # Helper function
 
 # converts the value to the current bit precision
 def to_float_using_current_precision(val: float):
-    if globals.FLOAT_PRECISION == 64:
+    if globals.FLOAT_PRECISION == "auto":
+        return val
+    if globals.FLOAT_PRECISION == "64":
         return numpy.float64(val)
-    if globals.FLOAT_PRECISION == 32:
+    if globals.FLOAT_PRECISION == "32":
         return numpy.float32(val)
-
     return numpy.float16(val)
 
 
@@ -179,7 +180,7 @@ def get_corrupted_bits_from_mask(mask: str):
 
 # corrupts a float value using a bit mask
 def corrupt_float_using_mask(val: float, mask: str):
-    return _corrupt_float_using_mask(val, mask, random_pad_mask(mask, globals.FLOAT_PRECISION))
+    return _corrupt_float_using_mask(val, mask, random_pad_mask(mask, int(globals.FLOAT_PRECISION)))
 
 
 # aux method
@@ -193,8 +194,33 @@ def _corrupt_float_using_mask(val: float, mask: str, full_mask: str):
     return temp_val, get_corrupted_bits_from_mask(full_mask)
 
 
-# Given a corruption probability, it tries to corrupt the value at injection_burst-different bits
+def auto_set_values(val):
+    """
+    TODO: improve at the dataset level
+    sets the bit-range to be the whole range of bits,
+    based on the precision of the value to corrupt
+    :param val: The value to corrupt
+    """
+    globals.FIRST_BIT = 0
+    if isinstance(val, np.float16):
+        globals.LAST_BIT = 15
+    elif isinstance(val, np.float32):
+        globals.LAST_BIT = 31
+    elif isinstance(val, np.float64):
+        globals.LAST_BIT = 63
+
+    logging.debug("Value has a: " + str(globals.LAST_BIT + 1) + "-bit precision")
+    globals.set_precision_settings(globals.LAST_BIT + 1)
+    globals.BIT_MASK = None
+
+
 def try_corrupt_value(val, corruption_prob: float, injection_burst: int):
+    """
+    Given a corruption probability, it tries to corrupt the value at injection_burst-different bits
+    :param corruption_prob: The corruption probability
+    :param val: The value to corrupt
+    :param injection_burst: How many times the value is going to be corrupted
+    """
     random.seed(datetime.now())
     chosen_bits = None
     if random.random() < corruption_prob:
@@ -204,6 +230,9 @@ def try_corrupt_value(val, corruption_prob: float, injection_burst: int):
                 new_val, chosen_bits = corrupt_int(val)
                 log_delta("Int", val, new_val, chosen_bits)
             else:
+                if globals.FLOAT_PRECISION == "auto":
+                    auto_set_values(val)
+
                 # Injection with bit range
                 if globals.BIT_MASK is None:
                     chosen_bits = generate_random_sample(
@@ -263,7 +292,7 @@ def __get_random_indexes(dataset):
 def try_corrupt_dataset(dataset, corruption_prob: float, injection_burst: int):
     corrupted_bits = None
     r_pos = __get_random_indexes(dataset)
-    logging.debug("Indexes to corrupt: " + str(r_pos))
+    logging.debug("Dataset indexes to corrupt: " + str(r_pos))
     if dataset.ndim == 0:
         dataset[()], corrupted_bits = try_corrupt_value(dataset[()], corruption_prob, injection_burst)
     elif dataset.ndim == 1:
@@ -285,7 +314,7 @@ def try_corrupt_dataset(dataset, corruption_prob: float, injection_burst: int):
 # Corrupts a random value in a dataset at the chosen bits
 def corrupt_dataset_using_bits(dataset, chosen_bits: []):
     r_pos = __get_random_indexes(dataset)
-    logging.debug("Indexes to corrupt: " + str(r_pos))
+    logging.debug("Dataset indexes to corrupt: " + str(r_pos))
     if dataset.ndim == 0:
         dataset[()], corrupted_bit = corrupt_value_at_bits(dataset[()], chosen_bits)
     elif dataset.ndim == 1:
@@ -316,7 +345,7 @@ def try_corrupt_hdf5_file(input_file: str, locations_to_corrupt, corruption_prob
                 # randomly calculates the next location to corrupt
                 next_location_index = random.randint(0, locations_count-1) if locations_count > 1 else 0
                 location = locations_to_corrupt[next_location_index]
-                logging.debug("Will try to corrupt at: " + str(location))
+                logging.debug("Will try to corrupt at dataset: " + str(location))
 
                 dataset = hdf.get(location)
                 if dataset is not None:

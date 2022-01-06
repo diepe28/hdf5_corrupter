@@ -50,7 +50,7 @@ class SettingReaderTests(unittest.TestCase):
         settings_reader.read_arguments(my_arguments)
         settings_reader.init_corrupter()
         self.assertEqual(globals.HDF5_FILE, hdf5_file)
-        self.assertEqual(globals.FLOAT_PRECISION, 16)
+        self.assertEqual(globals.FLOAT_PRECISION, "16")
         self.assertEqual(globals.ALLOW_SIGN_CHANGE, True)
         self.assertEqual(globals.LOG_FILE_PATH, log_file_path)
         self.assertEqual(globals.INJECTION_TYPE, "count")
@@ -58,5 +58,30 @@ class SettingReaderTests(unittest.TestCase):
         self.assertEqual(len(globals.LOCATIONS_TO_CORRUPT), 2)
         self.assertEqual(globals.LOCATIONS_TO_CORRUPT[0], locations_to_corrupt[0])
         self.assertEqual(globals.LOCATIONS_TO_CORRUPT[1], locations_to_corrupt[1])
+
+    def test_arguments_case1(self):
+        hdf5_file = '/home/diego/Documents/hdf5_files/newFiles/ckpt_ch_alexnet_e_10.h5'
+        log_file_path = '/home/diego/PycharmProjects/hdf5_corrupter/log-'
+        locations_to_corrupt = ['/predictor/conv1/b', '/predictor/conv1']
+
+        my_arguments = [
+            '--hdf5File',
+            hdf5_file,
+            '--floatPrecision',
+            '16',
+            '--allowSignChange',
+            '--logFilePath',
+            log_file_path,
+            '--injectionType',
+            'count',
+            '--injectionTries',
+            '10',
+            '--locationsToCorrupt',
+            locations_to_corrupt[0],
+            locations_to_corrupt[1],
+        ]
+
+        settings_reader.read_arguments(my_arguments)
+        settings_reader.init_corrupter()
 
 

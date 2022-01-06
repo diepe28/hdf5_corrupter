@@ -43,6 +43,7 @@ def save_injection_sequence(json_file_name: str):
 
 
 def main():
+
     settings_reader.read_arguments(sys.argv[1:])
 
     config_file_name = os.path.basename(globals.CONFIG_FILE_PATH).rsplit('.', 1)[0]
@@ -61,11 +62,10 @@ def main():
         if globals.INJECTION_SEQUENCE_PATH != "":
             corrupter.corrupt_hdf5_file_based_on_sequence(globals.HDF5_FILE, globals.INJECTION_SEQUENCE,
                                                           globals.LOCATIONS_TO_CORRUPT)
-
         # normal injection
         else:
-            logging.info("Will inject errors in bytes: [" + str(globals.FIRST_BIT) + "-" + str(globals.LAST_BIT) + "]")
             # if first bit (sign-bit) not in range and ALLOW_SIGN_CHANGE is true, then increase by 1 the start of range
+            # This makes it easier to generate random samples
             if globals.ALLOW_SIGN_CHANGE and globals.FIRST_BIT is not None and globals.FIRST_BIT > 0:
                 globals.FIRST_BIT -= 1
                 logging.info("Sign change is allowed")
