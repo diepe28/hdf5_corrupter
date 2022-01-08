@@ -33,8 +33,8 @@ def log_options():
                      str(globals.BIT_MASK))
 
     if globals.SAVE_INJECTION_SEQUENCE:
-        logging.info(" " + globals.SAVE_INJECTION_SEQUENCE_STR + ": TRUE")
-    if globals.INJECTION_SEQUENCE_PATH != "":
+        logging.info(" Will save the injection sequence to: " + globals.INJECTION_SEQUENCE_PATH)
+    if globals.LOAD_INJECTION_SEQUENCE:
         logging.info(" [WARNING] Ignoring corruption settings. Using injection sequence from file: " +
                      str(globals.INJECTION_SEQUENCE_PATH))
     logging.info(" " + globals.USE_RANDOM_LOCATIONS_STR + ": " + str(globals.USE_RANDOM_LOCATIONS))
@@ -91,10 +91,11 @@ def set_arguments_parser(parser: object):
                         help="default: 1, incompatible with scaling factor or bit mask. "
                              "It is the number of injection attempts per value")
 
-    parser.add_argument("--saveInjectionSequence", action="store_true",
-                        help="Incompatible with --injectionSequencePath, saves the injection sequence to a file")
+    parser.add_argument("--saveInjectionSequence", type=str,
+                        help="\"path/to/sequence.json\" Incompatible with --loadInjectionSequence, "
+                             " saves the injection sequence to the given file")
 
-    parser.add_argument("--injectionSequencePath", type=str,
+    parser.add_argument("--loadInjectionSequence", type=str,
                         help="\"path/to/sequence.json\", Incompatible with --saveInjectionSequence, uses the injection"
                              "sequence from the file. The following settings will be ignored: 'use_random_locations',"
                              "'locations_to_corrupt','injectionProbability','injectionType','injectionTries'")
@@ -161,10 +162,12 @@ def read_arguments(arguments):
             globals.BIT_MASK = args.bitMask
 
         if args.saveInjectionSequence is not None:
-            globals.SAVE_INJECTION_SEQUENCE = args.saveInjectionSequence
+            globals.SAVE_INJECTION_SEQUENCE = True
+            globals.INJECTION_SEQUENCE_PATH = args.saveInjectionSequence
 
-        if args.injectionSequencePath is not None:
-            globals.INJECTION_SEQUENCE_PATH = args.injectionSequencePath
+        if args.loadInjectionSequence is not None:
+            globals.LOAD_INJECTION_SEQUENCE = True
+            globals.INJECTION_SEQUENCE_PATH = args.loadInjectionSequence
 
         if args.allowSignChange is not None:
             globals.ALLOW_SIGN_CHANGE = args.allowSignChange
@@ -289,14 +292,12 @@ def get_error_in_settings():
     elif are_settings_incompatible():
         error_msg = "bit range (also burst), scaling factor, bit mask are incompatible settings"
 
-    elif globals.SAVE_INJECTION_SEQUENCE and \
-            (globals.INJECTION_SEQUENCE_PATH != "" or globals.SCALING_FACTOR is not None or
-             globals.BIT_MASK is not None):
-        error_msg = "'saveInjectionSequence' is not compatible with "\
-                    "'injection sequence path' or scaling factor or bit mask"
+    elif globals.SAVE_INJECTION_SEQUENCE and globals.LOAD_INJECTION_SEQUENCE:
+        error_msg = "'saveInjectionSequence' is not compatible with loadInjectionSequence"
 
-    elif globals.SAVE_INJECTION_SEQUENCE and globals.INJECTION_SEQUENCE_PATH != "":
-        error_msg = "--saveInjectionSequence and --injectionSequencePath are incompatible options"
+    elif globals.SAVE_INJECTION_SEQUENCE and \
+            (globals.SCALING_FACTOR is not None or globals.BIT_MASK is not None):
+        error_msg = "'saveInjectionSequence' is not compatible with scaling factor or bit mask"
 
     elif not globals.LOCATIONS_TO_CORRUPT and not globals.USE_RANDOM_LOCATIONS:
         error_msg = "Locations to corrupt must be provided when not using random locations"

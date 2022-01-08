@@ -49,6 +49,9 @@ LOG_FILE_PATH_STR = "log_file_path"
 SAVE_INJECTION_SEQUENCE = False
 SAVE_INJECTION_SEQUENCE_STR = "save_injection_sequence"
 
+LOAD_INJECTION_SEQUENCE = False
+LOAD_INJECTION_SEQUENCE_STR = "load_injection_sequence"
+
 INJECTION_SEQUENCE_PATH = ""
 INJECTION_SEQUENCE_PATH_STR = "injection_sequence_path"
 INJECTION_SEQUENCE = {}

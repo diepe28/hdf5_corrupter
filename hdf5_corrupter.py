@@ -15,7 +15,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 def determine_locations_to_corrupt():
     globals.ALL_LOCATIONS = hdf5_common.get_hdf5_file_leaf_locations(globals.HDF5_FILE)
 
-    if globals.INJECTION_SEQUENCE_PATH != "":
+    if globals.LOAD_INJECTION_SEQUENCE:
         if path.exists(globals.INJECTION_SEQUENCE_PATH):
             json_content = open(globals.INJECTION_SEQUENCE_PATH, 'r').read()
             globals.INJECTION_SEQUENCE = json.loads(json_content)
@@ -34,8 +34,11 @@ def determine_locations_to_corrupt():
                                                                                globals.ALL_LOCATIONS)
 
 
-def save_injection_sequence(json_file_name: str):
+def save_injection_sequence():
     if globals.SAVE_INJECTION_SEQUENCE:
+        json_file_name = globals.INJECTION_SEQUENCE_PATH
+        if not json_file_name.endswith('.json'):
+            json_file_name = json_file_name + ".json"
         # serializing injection sequence to json
         injection_sequence_content = json.dumps(globals.INJECTION_SEQUENCE, indent=2)
         with open(json_file_name, "w") as injection_sequence_file:
@@ -59,7 +62,7 @@ def main():
     else:
         determine_locations_to_corrupt()
 
-        if globals.INJECTION_SEQUENCE_PATH != "":
+        if globals.LOAD_INJECTION_SEQUENCE:
             corrupter.corrupt_hdf5_file_based_on_sequence(globals.HDF5_FILE, globals.INJECTION_SEQUENCE,
                                                           globals.LOCATIONS_TO_CORRUPT)
         # normal injection
@@ -86,7 +89,8 @@ def main():
 
             logging.info("File corrupted: " + str(errors_injected * 100 / file_entries_count) +
                          " %, with a total of: " + str(errors_injected) + " errors injected")
-            save_injection_sequence(globals.LOG_FILE_PATH + "injectionSequence_" + now + ".json")
+            #save_injection_sequence(globals.LOG_FILE_PATH + "injectionSequence_" + now + ".json")
+            save_injection_sequence()
 
 
 if __name__ == "__main__":

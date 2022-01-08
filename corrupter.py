@@ -132,10 +132,15 @@ def corrupt_int(val: int):
     :param val: The value to corrupt
     :return: The corrupted value
     """
+    is_negative = val < 0
+    if is_negative:
+        val *= -1
     binary = str(bin(val))[2:]
     chosen_bit = randint(0, len(binary) - 1)
     new_binary = change_bit_in_binary(binary, chosen_bit)
     new_val = int(new_binary, 2)
+    if is_negative:
+        new_val *= -1
     return new_val, chosen_bit
 
 
@@ -263,6 +268,8 @@ def try_corrupt_value(val, corruption_prob: float, injection_burst: int):
 
 # given the bit to flip, it corrupts the value changing that bit
 def corrupt_value_at_bits(val, chosen_bits: []):
+    if globals.FLOAT_PRECISION == "auto":
+        auto_set_values(val)
     str_val_type = str(type(val))
     if "int" in str_val_type:
         new_val, chosen_bits = corrupt_int(val)
