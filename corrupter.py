@@ -295,46 +295,57 @@ def __get_random_indexes(dataset):
     return indexes
 
 
-# Tries to corrupt the given dataset at a random index with the given probability
 def try_corrupt_dataset(dataset, corruption_prob: float, injection_burst: int):
+    """
+        Tries to corrupt the given dataset at a random index with the given probability. If successful, returns
+        the indexes where the corruption happened and at which indexes
+        :param corruption_prob: The corruption probability
+        :param val: The value to corrupt
+        :param injection_burst: How many times the value is going be corrupted
+    """
     corrupted_bits = None
-    r_pos = __get_random_indexes(dataset)
-    logging.debug("Dataset indexes to corrupt: " + str(r_pos))
+    indexes_array = __get_random_indexes(dataset)
+    logging.debug("Dataset indexes to corrupt: " + str(indexes_array))
     if dataset.ndim == 0:
         dataset[()], corrupted_bits = try_corrupt_value(dataset[()], corruption_prob, injection_burst)
     elif dataset.ndim == 1:
-        dataset[r_pos[0]], corrupted_bits = try_corrupt_value(dataset[r_pos[0]], corruption_prob, injection_burst)
+        dataset[indexes_array[0]], corrupted_bits = try_corrupt_value(dataset[indexes_array[0]], corruption_prob, injection_burst)
     elif dataset.ndim == 2:
-        dataset[r_pos[0], r_pos[1]], corrupted_bits = \
-            try_corrupt_value(dataset[r_pos[0], r_pos[1]], corruption_prob, injection_burst)
+        dataset[indexes_array[0], indexes_array[1]], corrupted_bits = \
+            try_corrupt_value(dataset[indexes_array[0], indexes_array[1]], corruption_prob, injection_burst)
     elif dataset.ndim == 3:
-        dataset[r_pos[0], r_pos[1], r_pos[2]], corrupted_bits = \
-            try_corrupt_value(dataset[r_pos[0], r_pos[1], r_pos[2]], corruption_prob, injection_burst)
+        dataset[indexes_array[0], indexes_array[1], indexes_array[2]], corrupted_bits = \
+            try_corrupt_value(dataset[indexes_array[0], indexes_array[1], indexes_array[2]], corruption_prob, injection_burst)
     elif dataset.ndim == 4:
-        dataset[r_pos[0], r_pos[1], r_pos[2], r_pos[3]], corrupted_bits = \
-            try_corrupt_value(dataset[r_pos[0], r_pos[1], r_pos[2], r_pos[3]], corruption_prob, injection_burst)
+        dataset[indexes_array[0], indexes_array[1], indexes_array[2], indexes_array[3]], corrupted_bits = \
+            try_corrupt_value(dataset[indexes_array[0], indexes_array[1], indexes_array[2], indexes_array[3]], corruption_prob, injection_burst)
     # more than 4 is very unlikely... right?
 
-    return corrupted_bits
+    return indexes_array, corrupted_bits
 
 
 # Corrupts a random value in a dataset at the chosen bits
-def corrupt_dataset_using_bits(dataset, chosen_bits: []):
-    r_pos = __get_random_indexes(dataset)
-    logging.debug("Dataset indexes to corrupt: " + str(r_pos))
+def corrupt_dataset_using_bits(dataset, indexes, bits: []):
+    """
+        Corrupts the dataset value at the given indexes, at the given bits
+        :param dataset: The dataset to corrupt
+        :param indexes: Where in the dataset to corrupt
+        :param bits: Which values must be flipped
+    """
+    logging.debug("Dataset indexes to corrupt: " + str(indexes))
     if dataset.ndim == 0:
-        dataset[()], corrupted_bit = corrupt_value_at_bits(dataset[()], chosen_bits)
+        dataset[()], corrupted_bit = corrupt_value_at_bits(dataset[()], bits)
     elif dataset.ndim == 1:
-        dataset[r_pos[0]], corrupted_bit = corrupt_value_at_bits(dataset[r_pos[0]], chosen_bits)
+        dataset[indexes[0]], corrupted_bit = corrupt_value_at_bits(dataset[indexes[0]], bits)
     elif dataset.ndim == 2:
-        dataset[r_pos[0], r_pos[1]], corrupted_bit = \
-            corrupt_value_at_bits(dataset[r_pos[0], r_pos[1]], chosen_bits)
+        dataset[indexes[0], indexes[1]], corrupted_bit = \
+            corrupt_value_at_bits(dataset[indexes[0], indexes[1]], bits)
     elif dataset.ndim == 3:
-        dataset[r_pos[0], r_pos[1], r_pos[2]], corrupted_bit = \
-            corrupt_value_at_bits(dataset[r_pos[0], r_pos[1], r_pos[2]], chosen_bits)
+        dataset[indexes[0], indexes[1], indexes[2]], corrupted_bit = \
+            corrupt_value_at_bits(dataset[indexes[0], indexes[1], indexes[2]], bits)
     elif dataset.ndim == 4:
-        dataset[r_pos[0], r_pos[1], r_pos[2], r_pos[3]], corrupted_bit = \
-            corrupt_value_at_bits(dataset[r_pos[0], r_pos[1], r_pos[2], r_pos[3]], chosen_bits)
+        dataset[indexes[0], indexes[1], indexes[2], indexes[3]], corrupted_bit = \
+            corrupt_value_at_bits(dataset[indexes[0], indexes[1], indexes[2], indexes[3]], bits)
     # more than 4 is very unlikely... right?
 
 
@@ -356,15 +367,16 @@ def try_corrupt_hdf5_file(input_file: str, locations_to_corrupt, corruption_prob
 
                 dataset = hdf.get(location)
                 if dataset is not None:
-                    corrupted_bits = try_corrupt_dataset(dataset, corruption_prob, injection_burst)
+                    indexes_array, corrupted_bits = try_corrupt_dataset(dataset, corruption_prob, injection_burst)
                     if corrupted_bits is not None:
                         errors_injected += 1
                     if globals.SAVE_INJECTION_SEQUENCE:
+                        corruption_location = [indexes_array, corrupted_bits]
                         base_location = hdf5_common.get_base_locations_for(location, globals.BASE_LOCATIONS)
                         if base_location in globals.INJECTION_SEQUENCE:
-                            globals.INJECTION_SEQUENCE[base_location].append(corrupted_bits)
+                            globals.INJECTION_SEQUENCE[base_location].append(corruption_location)
                         else:
-                            globals.INJECTION_SEQUENCE.update({base_location: [corrupted_bits]})
+                            globals.INJECTION_SEQUENCE.update({base_location: [corruption_location]})
                 else:
                     logging.error(str(location) + " doesn't exist or it is not supported for error injection")
                     sys.exit(-1)
@@ -384,13 +396,13 @@ def corrupt_hdf5_file_based_on_sequence(input_file: str, injection_sequence: {},
             for injection_path in injection_sequence:
                 inner_locations = hdf5_common.get_full_location_paths_for(injection_path, locations_to_corrupt)
                 locations_count = inner_locations.__len__()
-                for bits in injection_sequence[injection_path]:
+                for indexes, bits in injection_sequence[injection_path]:
                     next_location_index = random.randint(0, locations_count-1) if locations_count > 1 else 0
                     location = inner_locations[next_location_index]
                     logging.debug("Will corrupt at: " + str(location))
                     dataset = hdf.get(location)
                     if dataset is not None:
-                        corrupt_dataset_using_bits(dataset, bits)
+                        corrupt_dataset_using_bits(dataset, indexes, bits)
     else:
         logging.error("Specified file does not exist... exiting the tool")
         sys.exit(2)
