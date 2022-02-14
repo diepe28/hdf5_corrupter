@@ -324,14 +324,15 @@ def try_corrupt_dataset(dataset, corruption_prob: float, injection_burst: int):
     return indexes_array, corrupted_bits
 
 
-# Corrupts a random value in a dataset at the chosen bits
-def corrupt_dataset_using_bits(dataset, indexes, bits: []):
+def corrupt_dataset_using_location(dataset, indexes: [], bits: []):
     """
         Corrupts the dataset value at the given indexes, at the given bits
         :param dataset: The dataset to corrupt
-        :param indexes: Where in the dataset to corrupt
+        :param indexes: Where in the dataset to corrupt, might be empty
         :param bits: Which values must be flipped
     """
+    if not indexes:
+        indexes = __get_random_indexes(dataset)
     logging.debug("Dataset indexes to corrupt: " + str(indexes))
     if dataset.ndim == 0:
         dataset[()], corrupted_bit = corrupt_value_at_bits(dataset[()], bits)
@@ -371,7 +372,8 @@ def try_corrupt_hdf5_file(input_file: str, locations_to_corrupt, corruption_prob
                     if corrupted_bits is not None:
                         errors_injected += 1
                     if globals.SAVE_INJECTION_SEQUENCE:
-                        corruption_location = [indexes_array, corrupted_bits]
+                        corruption_location = [indexes_array, corrupted_bits] \
+                            if globals.INJECTION_SEQUENCE_SAVE_INDEXES else [[], corrupted_bits]
                         base_location = hdf5_common.get_base_locations_for(location, globals.BASE_LOCATIONS)
                         if base_location in globals.INJECTION_SEQUENCE:
                             globals.INJECTION_SEQUENCE[base_location].append(corruption_location)
@@ -402,7 +404,7 @@ def corrupt_hdf5_file_based_on_sequence(input_file: str, injection_sequence: {},
                     logging.debug("Will corrupt at: " + str(location))
                     dataset = hdf.get(location)
                     if dataset is not None:
-                        corrupt_dataset_using_bits(dataset, indexes, bits)
+                        corrupt_dataset_using_location(dataset, indexes, bits)
     else:
         logging.error("Specified file does not exist... exiting the tool")
         sys.exit(2)

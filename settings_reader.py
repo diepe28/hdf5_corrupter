@@ -91,9 +91,10 @@ def set_arguments_parser(parser: object):
                         help="default: 1, incompatible with scaling factor or bit mask. "
                              "It is the number of injection attempts per value")
 
-    parser.add_argument("--saveInjectionSequence", type=str,
-                        help="\"path/to/sequence.json\" Incompatible with --loadInjectionSequence, "
-                             " saves the injection sequence to the given file")
+    parser.add_argument("--saveInjectionSequence", nargs=2, action="store",
+                        help="\"path/to/sequence.json\" saveIndexes?,"
+                             "Incompatible with --loadInjectionSequence, "
+                             "saves the injection sequence to the given file with/without indexes")
 
     parser.add_argument("--loadInjectionSequence", type=str,
                         help="\"path/to/sequence.json\", Incompatible with --saveInjectionSequence, uses the injection"
@@ -163,7 +164,8 @@ def read_arguments(arguments):
 
         if args.saveInjectionSequence is not None:
             globals.SAVE_INJECTION_SEQUENCE = True
-            globals.INJECTION_SEQUENCE_PATH = args.saveInjectionSequence
+            globals.INJECTION_SEQUENCE_PATH = args.saveInjectionSequence[0]
+            globals.INJECTION_SEQUENCE_SAVE_INDEXES = args.saveInjectionSequence[1].lower() == "true"
 
         if args.loadInjectionSequence is not None:
             globals.LOAD_INJECTION_SEQUENCE = True
