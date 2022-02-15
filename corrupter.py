@@ -107,7 +107,7 @@ def float_to_bin(num):
     stripped_binaries = [s.replace('0b', '') for s in binaries]
     # print('Stripped: %s' % stripped_binaries)
 
-    # Pad each byte's binary representation's with 0's to make sure it has all 8 bits:
+    # Pad each byte's binary representation's with 0's to make sure it has all 8 bits_to_corrupt:
     #
     # ['00111110', '10100011', '11010111', '00001010']
     padded = [s.rjust(8, '0') for s in stripped_binaries]
@@ -173,7 +173,7 @@ def corrupt_float_at_bits(val: float, chosen_bits: []):
     return new_val, successful_bits
 
 
-# returns list with the indexes of all the 1s on the mask
+# returns list with the indexes_array of all the 1s on the mask
 def get_corrupted_bits_from_mask(mask: str):
     corrupted_bits = []
     for i in range(0, len(mask)):
@@ -202,7 +202,7 @@ def _corrupt_float_using_mask(val: float, mask: str, full_mask: str):
 def auto_set_values(val):
     """
     TODO: improve at the dataset level
-    sets the bit-range to be the whole range of bits,
+    sets the bit-range to be the whole range of bits_to_corrupt,
     based on the precision of the value to corrupt
     :param val: The value to corrupt
     """
@@ -225,6 +225,7 @@ def try_corrupt_value(val, corruption_prob: float, injection_burst: int):
     :param corruption_prob: The corruption probability
     :param val: The value to corrupt
     :param injection_burst: How many times the value is going to be corrupted
+    :return: The corrupted value and the chosen bits_to_corrupt for corruption
     """
     random.seed(datetime.now())
     chosen_bits = None
@@ -298,14 +299,15 @@ def __get_random_indexes(dataset):
 def try_corrupt_dataset(dataset, corruption_prob: float, injection_burst: int):
     """
         Tries to corrupt the given dataset at a random index with the given probability. If successful, returns
-        the indexes where the corruption happened and at which indexes
+        the indexes_array where the corruption happened and at which indexes_array
+        :param dataset: The dataset to corrupt
         :param corruption_prob: The corruption probability
-        :param val: The value to corrupt
         :param injection_burst: How many times the value is going be corrupted
+        :return: The indexes_array of chosen entry and which bits_to_corrupt were corrupted
     """
     corrupted_bits = None
     indexes_array = __get_random_indexes(dataset)
-    logging.debug("Dataset indexes to corrupt: " + str(indexes_array))
+    logging.debug("Dataset indexes_array to corrupt: " + str(indexes_array))
     if dataset.ndim == 0:
         dataset[()], corrupted_bits = try_corrupt_value(dataset[()], corruption_prob, injection_burst)
     elif dataset.ndim == 1:
@@ -324,30 +326,50 @@ def try_corrupt_dataset(dataset, corruption_prob: float, injection_burst: int):
     return indexes_array, corrupted_bits
 
 
-def corrupt_dataset_using_location(dataset, indexes: [], bits: []):
+def corrupt_dataset_using_location(dataset, indexes_array: [], bits_to_corrupt: []):
     """
         Corrupts the dataset value at the given indexes, at the given bits
         :param dataset: The dataset to corrupt
-        :param indexes: Where in the dataset to corrupt, might be empty
-        :param bits: Which values must be flipped
+        :param indexes_array: Where in the dataset to corrupt, might be empty
+        :param bits_to_corrupt: Which values must be flipped
+        :return: The indexes of chosen entry and which bits were corrupted
     """
-    if not indexes:
-        indexes = __get_random_indexes(dataset)
-    logging.debug("Dataset indexes to corrupt: " + str(indexes))
+    if not indexes_array:
+        indexes_array = __get_random_indexes(dataset)
+    logging.debug("Dataset indexes_array to corrupt: " + str(indexes_array))
     if dataset.ndim == 0:
-        dataset[()], corrupted_bit = corrupt_value_at_bits(dataset[()], bits)
+        dataset[()], corrupted_bit = corrupt_value_at_bits(dataset[()], bits_to_corrupt)
     elif dataset.ndim == 1:
-        dataset[indexes[0]], corrupted_bit = corrupt_value_at_bits(dataset[indexes[0]], bits)
+        dataset[indexes_array[0]], corrupted_bit = corrupt_value_at_bits(dataset[indexes_array[0]], bits_to_corrupt)
     elif dataset.ndim == 2:
-        dataset[indexes[0], indexes[1]], corrupted_bit = \
-            corrupt_value_at_bits(dataset[indexes[0], indexes[1]], bits)
+        dataset[indexes_array[0], indexes_array[1]], corrupted_bit = \
+            corrupt_value_at_bits(dataset[indexes_array[0], indexes_array[1]], bits_to_corrupt)
     elif dataset.ndim == 3:
-        dataset[indexes[0], indexes[1], indexes[2]], corrupted_bit = \
-            corrupt_value_at_bits(dataset[indexes[0], indexes[1], indexes[2]], bits)
+        dataset[indexes_array[0], indexes_array[1], indexes_array[2]], corrupted_bit = \
+            corrupt_value_at_bits(dataset[indexes_array[0], indexes_array[1], indexes_array[2]], bits_to_corrupt)
     elif dataset.ndim == 4:
-        dataset[indexes[0], indexes[1], indexes[2], indexes[3]], corrupted_bit = \
-            corrupt_value_at_bits(dataset[indexes[0], indexes[1], indexes[2], indexes[3]], bits)
+        dataset[indexes_array[0], indexes_array[1], indexes_array[2], indexes_array[3]], corrupted_bit = \
+            corrupt_value_at_bits(dataset[indexes_array[0], indexes_array[1], indexes_array[2], indexes_array[3]], bits_to_corrupt)
     # more than 4 is very unlikely... right?
+
+    return indexes_array, bits_to_corrupt
+
+
+def save_values_in_sequence(corrupted_bits, indexes_array, location):
+    """
+    If applies, saves [indexes_array, corrupted bits] at location index
+    :param corrupted_bits: the bits that were corrupted
+    :param indexes_array: the indexes of the dataset of the corrupted value
+    :param location: the name of the dataset
+    """
+    if globals.SAVE_INJECTION_SEQUENCE:
+        corruption_location = [indexes_array, corrupted_bits] \
+            if globals.INJECTION_SEQUENCE_SAVE_INDEXES else [[], corrupted_bits]
+        base_location = hdf5_common.get_base_locations_for(location, globals.BASE_LOCATIONS)
+        if base_location in globals.INJECTION_SEQUENCE_SAVED:
+            globals.INJECTION_SEQUENCE_SAVED[base_location].append(corruption_location)
+        else:
+            globals.INJECTION_SEQUENCE_SAVED.update({base_location: [corruption_location]})
 
 
 # Tries to corrupt the input file at the given locations, with the given probability, num_injection_attempts times
@@ -371,14 +393,7 @@ def try_corrupt_hdf5_file(input_file: str, locations_to_corrupt, corruption_prob
                     indexes_array, corrupted_bits = try_corrupt_dataset(dataset, corruption_prob, injection_burst)
                     if corrupted_bits is not None:
                         errors_injected += 1
-                    if globals.SAVE_INJECTION_SEQUENCE:
-                        corruption_location = [indexes_array, corrupted_bits] \
-                            if globals.INJECTION_SEQUENCE_SAVE_INDEXES else [[], corrupted_bits]
-                        base_location = hdf5_common.get_base_locations_for(location, globals.BASE_LOCATIONS)
-                        if base_location in globals.INJECTION_SEQUENCE:
-                            globals.INJECTION_SEQUENCE[base_location].append(corruption_location)
-                        else:
-                            globals.INJECTION_SEQUENCE.update({base_location: [corruption_location]})
+                    save_values_in_sequence(corrupted_bits, indexes_array, location)
                 else:
                     logging.error(str(location) + " doesn't exist or it is not supported for error injection")
                     sys.exit(-1)
@@ -404,7 +419,8 @@ def corrupt_hdf5_file_based_on_sequence(input_file: str, injection_sequence: {},
                     logging.debug("Will corrupt at: " + str(location))
                     dataset = hdf.get(location)
                     if dataset is not None:
-                        corrupt_dataset_using_location(dataset, indexes, bits)
+                        indexes_array, corrupted_bits = corrupt_dataset_using_location(dataset, indexes, bits)
+                        save_values_in_sequence(corrupted_bits, indexes_array, location)
     else:
         logging.error("Specified file does not exist... exiting the tool")
         sys.exit(2)

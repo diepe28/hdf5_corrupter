@@ -33,10 +33,10 @@ def log_options():
                      str(globals.BIT_MASK))
 
     if globals.SAVE_INJECTION_SEQUENCE:
-        logging.info(" Will save the injection sequence to: " + globals.INJECTION_SEQUENCE_PATH)
+        logging.info(" Will save the injection sequence to: " + globals.INJECTION_SEQUENCE_SAVE_PATH)
     if globals.LOAD_INJECTION_SEQUENCE:
         logging.info(" [WARNING] Ignoring corruption settings. Using injection sequence from file: " +
-                     str(globals.INJECTION_SEQUENCE_PATH))
+                     str(globals.INJECTION_SEQUENCE_LOAD_PATH))
     logging.info(" " + globals.USE_RANDOM_LOCATIONS_STR + ": " + str(globals.USE_RANDOM_LOCATIONS))
     logging.info(" " + globals.LOCATIONS_TO_CORRUPT_STR + ":")
     for location in globals.LOCATIONS_TO_CORRUPT:
@@ -92,12 +92,12 @@ def set_arguments_parser(parser: object):
                              "It is the number of injection attempts per value")
 
     parser.add_argument("--saveInjectionSequence", nargs=2, action="store",
-                        help="\"path/to/sequence.json\" saveIndexes?,"
+                        help="\"path/to/savedSequence.json\" saveIndexes?,"
                              "Incompatible with --loadInjectionSequence, "
-                             "saves the injection sequence to the given file with/without indexes")
+                             "saves the injection sequence to the given file with/without indexes_array")
 
     parser.add_argument("--loadInjectionSequence", type=str,
-                        help="\"path/to/sequence.json\", Incompatible with --saveInjectionSequence, uses the injection"
+                        help="\"path/to/loadedSequence.json\", Incompatible with --saveInjectionSequence, uses the injection"
                              "sequence from the file. The following settings will be ignored: 'use_random_locations',"
                              "'locations_to_corrupt','injectionProbability','injectionType','injectionTries'")
 
@@ -164,12 +164,12 @@ def read_arguments(arguments):
 
         if args.saveInjectionSequence is not None:
             globals.SAVE_INJECTION_SEQUENCE = True
-            globals.INJECTION_SEQUENCE_PATH = args.saveInjectionSequence[0]
+            globals.INJECTION_SEQUENCE_SAVE_PATH = args.saveInjectionSequence[0]
             globals.INJECTION_SEQUENCE_SAVE_INDEXES = args.saveInjectionSequence[1].lower() == "true"
 
         if args.loadInjectionSequence is not None:
             globals.LOAD_INJECTION_SEQUENCE = True
-            globals.INJECTION_SEQUENCE_PATH = args.loadInjectionSequence
+            globals.INJECTION_SEQUENCE_LOAD_PATH = args.loadInjectionSequence
 
         if args.allowSignChange is not None:
             globals.ALLOW_SIGN_CHANGE = args.allowSignChange
@@ -185,6 +185,10 @@ def read_arguments(arguments):
 
 
 def read_config_file(config_file_path: str):
+    """
+    Method is outdated and should not be used
+    :param config_file_path: The path to the config file
+    """
     with open(config_file_path) as f:
         data = yaml.load(f, Loader=yaml.Loader)
 
@@ -199,10 +203,6 @@ def read_config_file(config_file_path: str):
         globals.USE_RANDOM_LOCATIONS = bool(data[globals.USE_RANDOM_LOCATIONS_STR])
         globals.LOCATIONS_TO_CORRUPT = data[globals.LOCATIONS_TO_CORRUPT_STR]
         globals.SAVE_INJECTION_SEQUENCE = bool(data[globals.SAVE_INJECTION_SEQUENCE_STR])
-
-        # values that might be in the config file
-        if globals.INJECTION_SEQUENCE_PATH_STR in data:
-            globals.INJECTION_SEQUENCE_PATH = data[globals.INJECTION_SEQUENCE_PATH_STR]
 
         if globals.FLOAT_PRECISION_STR in data:
             globals.FLOAT_PRECISION = data[globals.FLOAT_PRECISION_STR]
@@ -293,9 +293,6 @@ def get_error_in_settings():
 
     elif are_settings_incompatible():
         error_msg = "bit range (also burst), scaling factor, bit mask are incompatible settings"
-
-    elif globals.SAVE_INJECTION_SEQUENCE and globals.LOAD_INJECTION_SEQUENCE:
-        error_msg = "'saveInjectionSequence' is not compatible with loadInjectionSequence"
 
     elif globals.SAVE_INJECTION_SEQUENCE and \
             (globals.SCALING_FACTOR is not None or globals.BIT_MASK is not None):
