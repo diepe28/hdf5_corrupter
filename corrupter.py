@@ -27,6 +27,9 @@ def generate_random_sample(start: int, end: int, length: int, allow_0=False):
     random.seed(datetime.now())
     the_range = range(start, end+1)
     range_length = end - start
+    # When start and end are the same
+    if range_length == 0:
+        range_length = 1
     sample = []
     while length > range_length:
         new_sample = random.sample(the_range, range_length)

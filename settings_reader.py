@@ -301,6 +301,9 @@ def get_error_in_settings():
     elif not globals.LOCATIONS_TO_CORRUPT and not globals.USE_RANDOM_LOCATIONS:
         error_msg = "Locations to corrupt must be provided when not using random locations"
 
+    elif globals.FLOAT_PRECISION != "auto" and globals.LOAD_INJECTION_SEQUENCE:
+        error_msg = "When loading an injection sequence the float precision must be set to auto"
+
     return error_msg
 
 
